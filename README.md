@@ -1,10 +1,15 @@
 # ProjetIn :computer: :link:
 
 ----
-#### Para configurar o ambiente de trabalho pela primeira vez, rodar os seguintes comandos:
+##### Instalações prévias necessárias:
+ - PostegreSQL
+
+----
+#### Para configurar o ambiente de trabalho pela primeira vez, utilizar os seguintes comandos:
 ```
 # 1. Instalar o pacote do ambiente virtual
 
+ - No Unix
 apt install python3.10-venv
 
 
@@ -24,7 +29,7 @@ source .venv/bin/activate
 
 # 4. Instalar as dependências
 
-pip install -r requirements.txt
+pip install -r requirements/requirements.txt
 ````
 ----
 ####  Pull:
@@ -33,19 +38,20 @@ pip install -r requirements.txt
 - Ao reiniciar o terminal, refazer o passo 3.
 
 ----
-#### Antes de dar push, se foi adicionado alguma dependência, deve-se rodar os seguintes comandos:
-````
-# 1. Mostrar os pacotes utilizados
+#### Antes de dar push, se foi adicionado alguma dependência, deve-se usar o seguinte comando:
+```
 pip freeze > requirements/requirements.txt
-
-# 2. Copiar a lista de todos os pacotes utilizados que será mostrado no terminal após o comando do passo 1
-
-# 3. Salvar os pacotes no arquivo requirements/requirements.txt
-````
+```
 ----
 
-#### Para iniciar a aplicação, digitar:
+#### Para iniciar a aplicação, usar os seguintes comandos:
 ```
 python.\manage.py runserver
+```
+```
+python. \manage.py migration
+```
+```
+python. \manage.py migrate
 ```
 ----
