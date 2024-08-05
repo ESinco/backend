@@ -1,6 +1,5 @@
 <h1 align="center">ProjetIn :computer: :link:</h1>
 
-----
 ## Índice 
 
 * [Instalações prévias](#Instalações-prévias-necessárias)
