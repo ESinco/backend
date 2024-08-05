@@ -33,18 +33,6 @@ pip install -r requirements.txt
 - Ao reiniciar o terminal, refazer o passo 2.
 
 ----
-#### Para configurar o seu ambiente de trabalho já criado anteriormente, siga os próximos comandos:
-
-### 1. Ativar o ambiente virtual
-#### No Windows:
-```
-.venv\Scripts\activate
-```
-#### No Unix ou MacOS:
-```
-source .venv/bin/activate
-```
-----
 #### Antes de dar push, se foi adicionado alguma dependência, deve-se rodar os seguintes comandos:
 
 ### 1. Mostrar os pacotes utilizados
