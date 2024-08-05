@@ -1,5 +1,6 @@
 <h1 align="center">ProjetIn :computer: :link:</h1>
 
+----
 ## Índice 
 
 * [Instalações prévias](#Instalações-prévias-necessárias)
@@ -45,11 +46,11 @@ source .venv/bin/activate
 pip install -r requirements/requirements.txt
 ````
 ----
-####  Pull:
+####  Pull
 - Ao dar pull, refazer os passos 3 e 4.
 
 ----
-####  Ambiente configurado anteriormente:
+####  Ambiente configurado anteriormente
 - Ao reiniciar o terminal, refazer o passo 3.
 
 ----
