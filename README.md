@@ -8,7 +8,7 @@
 * [Pull](#Pull)
 * [Ambiente previamente configurado](#Ambiente-configurado-anteriormente)
 * [Push](#Push)
-* [Inicialização da aplicação](#Iniciar-aplicação)
+* [Inicialização da aplicação](#Iniciar-a-aplicação)
 * [Status do Projeto](#status-do-Projeto)
 
 ----
