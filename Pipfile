@@ -13,5 +13,9 @@ lint='1.2.1'
 
 [requires]
 python='3.11'
-pip='24.2'
+
+[scripts]
+lint = "pylint ."
+pep = "pycodestyle ./backend"
+
 
