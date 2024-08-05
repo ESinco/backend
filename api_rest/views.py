@@ -69,13 +69,13 @@ def get_all_alunos(request):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
-def get_by_matricula_aluno(request, matricula_aluno):
+def get_by_matricula_aluno(request, matricula):
     try:
-        professor = Aluno.objects.get(pk=matricula_aluno)
+        aluno = Aluno.objects.get(pk=matricula)
     except:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = AlunoSerializer(professor)
+        serializer = AlunoSerializer(aluno)
         return Response(serializer.data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
