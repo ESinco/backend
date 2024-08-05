@@ -33,7 +33,7 @@ pip install -r requirements.txt
 - Ao reiniciar o terminal, refazer o passo 2.
 
 ----
-#### Para configurar o seu ambiente de trabalho já criado anteriomente, siga os próximos comandos:
+#### Para configurar o seu ambiente de trabalho já criado anteriormente, siga os próximos comandos:
 
 ### 1. Ativar o ambiente virtual
 #### No Windows:
