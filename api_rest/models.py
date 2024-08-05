@@ -33,3 +33,11 @@ class Projeto(models.Model):
         return (f'id_projeto: {self.id_projeto}\n'
                 f'nome: {self.nome}\n'
                 f'descrição: {self.descricao}')
+    
+class Tags(models.Model):
+    nome = models.TextField()
+    grupo = models.TextField()
+
+    def __str__(self):
+        return f'Habilidade: {self.nome}'
+
