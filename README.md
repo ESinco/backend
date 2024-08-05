@@ -15,11 +15,12 @@ python -m venv .venv
 
 # 3. Ativar o ambiente virtual
  
- No Windows:
+ - No Windows:
 .venv\Scripts\activate
 
- No Unix ou MacOS:
+ - No Unix ou MacOS:
 source .venv/bin/activate
+
 
 # 4. Instalar as dependências
 
