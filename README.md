@@ -1,4 +1,13 @@
-# ProjetIn :computer: :link:
+<h1 align="center">ProjetIn :computer: :link:</h1>
+
+----
+## Índice 
+
+* [Instalações prévias](#Instalações-prévias-necessárias)
+* [Configuração do ambiente de trabalho](#Para-configurar-ambiente-de-trabalho)
+* [Pull e Ambiente previamente configurado](#Pull-Ambiente-configurado)
+* [Inicialização da aplicação](#Iniciar-aplicação)
+* [Status do Projeto](#status-do-Projeto)
 
 ----
 #### Instalações prévias necessárias:
@@ -54,4 +63,9 @@ python. \manage.py migration
 ```
 python. \manage.py migrate
 ```
+----
+
+<h4 align="center"> 
+    :construction:  Projeto em construção  :construction:
+</h4>
 ----
