@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+asgiref='3.8.1'
+Django='5.0.7'
+sqlparse='0.5.1'
+tzdata='2024.1'
+pycodestyle='2.12.1'
+lint='1.2.1'
+
+[requires]
+python='3.11'
+pip='24.2'
+
