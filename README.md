@@ -1,7 +1,7 @@
 # ProjetIn
 
 ----
-#### Para configurar o seu ambiente de trabalho, rode os seguintes comandos:
+#### Para configurar o seu ambiente de trabalho pela primeira vez, rode os seguintes comandos:
 
 ### 1. Instalar o pacote do ambiente virtual
 ```
@@ -29,7 +29,7 @@ pip install -r requirements.txt
 ----
 ####  Pull:
 - Ao dar pull, refazer os passos 2 e 3.
-####  Reiniciar o terminal:
+####  Ambiente configurado anteriormente:
 - Ao reiniciar o terminal, refazer o passo 2.
 
 ----
