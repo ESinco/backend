@@ -2,8 +2,6 @@
 
 SHELL := /bin/bash
 PWD=$(shell pwd)
-PYLINT=/bin/pylint
-PEP=/bin/pep8
 
 help:
 	@echo "Usage"
@@ -19,9 +17,11 @@ default:
 
 init:
 	pipenv install
+
+enter-pipenv:
 	pipenv shell
 
-run:
+run: init
 	pipenv run python manage.py runserver
 
 migrate:
@@ -31,8 +31,8 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf .pytest_cache
 
-lint: venv
-	$(PYLINT) . --recursive=y
+lint:
+	pipenv run pylint ./ProjetIn
 
-pep: venv
-	$(PEP) -v --global-config .pep8 ./backend
+pep:
+	pipenv run pycodestyle ./backend

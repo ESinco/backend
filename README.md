@@ -8,6 +8,7 @@ Certifique-se de ter `python3.11`, `pip` e `pipenv`
 ## 2. Iniciar o pipenv
 ```
 make init
+pipenv shell
 ```
 ## 3. Rodar a aplicação
 ```
