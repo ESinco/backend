@@ -1,7 +1,7 @@
 # ProjetIn
 
 ----
-#### Para configurar o seu ambiente de trabalho pela primeira vez, rode os seguintes comandos:
+#### Para configurar o seu ambiente de trabalho, rode os seguintes comandos:
 
 ### 1. Instalar o pacote do ambiente virtual
 ```
