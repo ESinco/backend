@@ -27,6 +27,12 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 ----
+####  Pull:
+- Ao dar pull, refazer os passos 2 e 3.
+####  Reiniciar o terminal:
+- Ao reiniciar o terminal, refazer o passo 2.
+
+----
 #### Para configurar o seu ambiente de trabalho já criado anteriomente, siga os próximos comandos:
 
 ### 1. Ativar o ambiente virtual
@@ -38,10 +44,6 @@ pip install -r requirements.txt
 ```
 source .venv/bin/activate
 ```
-----
-#### Ao dar pull, refazer os passos 2 e 3.
-#### Ao reiniciar o terminal, refazer o passo 2.
-
 ----
 #### Antes de dar push, se foi adicionado alguma dependência, deve-se rodar os seguintes comandos:
 
