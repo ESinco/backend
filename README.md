@@ -63,13 +63,13 @@ pip freeze > requirements/requirements.txt
 #### Iniciar a aplicação
 - Para iniciar a aplicação, usar os seguintes comandos:
 ```
-python.\manage.py runserver
+python .\manage.py runserver
 ```
 ```
-python. \manage.py migration
+python .\manage.py migration
 ```
 ```
-python. \manage.py migrate
+python .\manage.py migrate
 ```
 ----
 #### Status do Projeto
