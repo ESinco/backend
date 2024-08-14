@@ -16,12 +16,20 @@ class Aluno(models.Model):
     matricula = models.CharField(max_length=9, primary_key=True)
     nome = models.TextField()
     email = models.TextField(unique=True)
+    curriculo = models.TextField(null=True)
+    github = models.TextField(null=True)
+    linkedin = models.TextField(null=True)
+    cra = models.FloatField(null=True)
     senha = models.TextField()
 
     def __str__(self):
         return (f'matricula: {self.matricula}\n'
                 f'nome: {self.nome}\n'
                 f'email: {self.email}\n'
+                f'curriculo: {self.curriculo}'
+                f'github: {self.github}'
+                f'linkedin: {self.linkedin}'
+                f'cra: {self.cra}'
                 f'senha: {self.senha}')
 
 class Projeto(models.Model):
