@@ -2,9 +2,9 @@ from django.db import models
 
 class Professor(models.Model):
     id_professor = models.AutoField(primary_key=True)
-    nome = models.TextField()
-    email = models.TextField(unique=True)
-    senha = models.TextField()
+    nome = models.TextField(null=False)
+    email = models.TextField(null=False, unique=True)
+    senha = models.TextField(null=False)
 
     def __str__(self):
         return (f'id_Professor: {self.id_professor}\n'
