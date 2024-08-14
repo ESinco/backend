@@ -10,6 +10,20 @@ from .serializers import *
 
 import json
 
+@api_view(['POST'])
+def criar_professor(request):
+    if request.method == 'POST':
+        novo_professor = request.data
+        serializer = ProfessorSemIdSerializer(data=novo_professor)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 @api_view(['GET'])
 def get_professores(request):
     if request.method == 'GET':
@@ -32,14 +46,15 @@ def get_by_id_professor(request, id_professor):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['POST'])
-def criar_professor(request):
+def criar_aluno(request):
     if request.method == 'POST':
-        novo_professor = request.data
-        serializer = ProfessorSemIdSerializer(data=novo_professor)
+        novo_aluno = request.data
+        serializer = AlunoSerializer(data=novo_aluno)
 
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            professor = serializer.save()
+            response_serializer = ProfessorSerializer(professor)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -64,6 +79,12 @@ def get_projetos(request):
     if request.method == 'GET':
         projetos = Projeto.objects.all()
         serializer = ProjetoSerializer(projetos, many=True)
+        
+@api_view(['GET'])
+def get_all_alunos(request):
+    if request.method == 'GET':
+        alunos = Aluno.objects.all()
+        serializer = AlunoSerializer(alunos, many=True)
         return Response(serializer.data)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -72,6 +93,9 @@ def get_projetos(request):
 def get_by_id_projeto(request, id_projeto):
     try:
         projeto = Projeto.objects.get(pk=id_projeto)
+def get_by_matricula_aluno(request, matricula):
+    try:
+        aluno = Aluno.objects.get(pk=matricula)
     except:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -93,4 +117,6 @@ def get_all_projetos_by_professor(request):
                 return Response(status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({"detail": "O parâmetro 'responsavel' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = AlunoSerializer(aluno)
+        return Response(serializer.data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
