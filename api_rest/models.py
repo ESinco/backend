@@ -31,16 +31,24 @@ class Aluno(models.Model):
                 f'linkedin: {self.linkedin}'
                 f'cra: {self.cra}'
                 f'senha: {self.senha}')
-
+    
 class Projeto(models.Model):
     id_projeto = models.AutoField(primary_key=True)
-    nome = models.TextField()
+    nome = models.TextField(null=False)
     descricao = models.TextField()
+    dono = models.TextField()
+    data_de_criacao = models.BigIntegerField()
+    vagas = models.IntegerField()
+    responsavel = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
 
     def __str__(self):
         return (f'id_projeto: {self.id_projeto}\n'
                 f'nome: {self.nome}\n'
-                f'descrição: {self.descricao}')
+                f'descrição: {self.descricao}\n'
+                f'dono: {self.dono}\n'
+                f'data de criação: {self.data_de_criacao}\n'
+                f'vagas: {self.vagas}\n'
+                f'responsavel: {self.responsavel}')
     
 class Tags(models.Model):
     nome = models.TextField()
