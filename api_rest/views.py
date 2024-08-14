@@ -60,6 +60,28 @@ def criar_aluno(request):
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+@api_view(['GET'])
+def get_all_alunos(request):
+    if request.method == 'GET':
+        alunos = Aluno.objects.all()
+        serializer = AlunoSerializer(alunos, many=True)
+        return Response(serializer.data)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+def get_by_matricula_aluno(request, matricula):
+    try:
+        aluno = Aluno.objects.get(pk=matricula)
+    except:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = AlunoSerializer(aluno)
+        return Response(serializer.data)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
 @api_view(['POST'])
 def criar_projeto(request):
     if request.method == 'POST':
@@ -79,29 +101,17 @@ def get_projetos(request):
     if request.method == 'GET':
         projetos = Projeto.objects.all()
         serializer = ProjetoSerializer(projetos, many=True)
-        
-@api_view(['GET'])
-def get_all_alunos(request):
-    if request.method == 'GET':
-        alunos = Aluno.objects.all()
-        serializer = AlunoSerializer(alunos, many=True)
         return Response(serializer.data)
-
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
 def get_by_id_projeto(request, id_projeto):
-    try:
-        projeto = Projeto.objects.get(pk=id_projeto)
-def get_by_matricula_aluno(request, matricula):
-    try:
-        aluno = Aluno.objects.get(pk=matricula)
-    except:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
     if request.method == 'GET':
-        serializer = ProjetoSerializer(projeto)
-        return Response(serializer.data)
+        try:
+            projeto = Projeto.objects.get(pk=id_projeto)
+            serializer = ProjetoSerializer(projeto)
+            return Response(serializer.data)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
@@ -117,6 +127,4 @@ def get_all_projetos_by_professor(request):
                 return Response(status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({"detail": "O parâmetro 'responsavel' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = AlunoSerializer(aluno)
-        return Response(serializer.data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
