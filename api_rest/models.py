@@ -7,8 +7,7 @@ class Professor(models.Model):
     senha = models.TextField(null=False)
 
     def __str__(self):
-        return (f'id_Professor: {self.id_professor}\n'
-                f'nome: {self.nome}\n'
+        return (f'nome: {self.nome}\n'
                 f'email: {self.email}\n'
                 f'senha: {self.senha}')
 
