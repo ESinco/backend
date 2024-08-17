@@ -26,4 +26,4 @@ class ProjetoSerializer(serializers.ModelSerializer):
 class ProjetoSemIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projeto
-        fields = ['nome', 'descricao', 'dono', 'data_de_criacao', 'vagas', 'responsavel']
+        fields = ['nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel']

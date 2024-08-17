@@ -14,7 +14,7 @@ class ProjetoModelTest(TestCase):
         self.projeto = Projeto.objects.create(
             nome='Projeto de Teste',
             descricao='Este é um projeto de teste.',
-            dono='João Arthur',
+            laboratorio='João Arthur',
             data_de_criacao=20240814,
             vagas=5,
             responsavel=self.professor
@@ -24,7 +24,7 @@ class ProjetoModelTest(TestCase):
         self.assertIsInstance(self.projeto, Projeto)
         self.assertEqual(self.projeto.nome, 'Projeto de Teste')
         self.assertEqual(self.projeto.descricao, 'Este é um projeto de teste.')
-        self.assertEqual(self.projeto.dono, 'João Arthur')
+        self.assertEqual(self.projeto.laboratorio, 'João Arthur')
         self.assertEqual(self.projeto.data_de_criacao, 20240814)
         self.assertEqual(self.projeto.vagas, 5)
         self.assertEqual(self.projeto.responsavel, self.professor)
@@ -32,7 +32,7 @@ class ProjetoModelTest(TestCase):
     def test_projeto_str(self):
         expected_str = (f'nome: Projeto de Teste\n'
                 f'descrição: Este é um projeto de teste.\n'
-                f'dono: João Arthur\n'
+                f'laboratório: João Arthur\n'
                 f'data de criação: 20240814\n'
                 f'vagas: 5\n'
                 f'responsavel: {self.projeto.responsavel}')
@@ -49,7 +49,7 @@ class CriarProjetoViewTest(APITestCase):
         self.projeto_data = {
             "nome": "Projeto Teste",
             "descricao": "Descrição do projeto teste",
-            "dono": "Dono Teste",
+            "laboratorio": "Dono Teste",
             "data_de_criacao": 123456789,
             "vagas": 5,
             "responsavel": self.professor.id_professor
@@ -80,9 +80,9 @@ class CriarProjetoViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
-    def test_criar_projeto_dono_vazio(self):
+    def test_criar_projeto_laboratorio_vazio(self):
         invalid_data = self.projeto_data.copy()
-        invalid_data['dono'] = ''
+        invalid_data['laboratorio'] = ''
         response = self.client.post(self.url, invalid_data, format='json')
         
         #Asserts
@@ -95,8 +95,8 @@ class GetProjetosViewTest(APITestCase):
         self.client = APIClient()
         self.url = reverse('get_projetos')
         self.professor = Professor.objects.create(nome="Manel", email="manel@example.com", senha="1234")
-        Projeto.objects.create(nome="Projeto 1", descricao="Descrição 1", dono="Dono 1", data_de_criacao=123456789, vagas=5, responsavel=self.professor)
-        Projeto.objects.create(nome="Projeto 2", descricao="Descrição 2", dono="Dono 2", data_de_criacao=123456780, vagas=3, responsavel=self.professor)
+        Projeto.objects.create(nome="Projeto 1", descricao="Descrição 1", laboratorio="Dono 1", data_de_criacao=123456789, vagas=5, responsavel=self.professor)
+        Projeto.objects.create(nome="Projeto 2", descricao="Descrição 2", laboratorio="Dono 2", data_de_criacao=123456780, vagas=3, responsavel=self.professor)
 
     def test_get_projetos_sucesso(self):
         response = self.client.get(self.url, format='json')
@@ -120,7 +120,7 @@ class GetByIdProjetoViewTest(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.professor = Professor.objects.create(nome="Eliane", email="eliane@example.com", senha="1234")
-        self.projeto = Projeto.objects.create(nome="Projeto 1", descricao="Descrição 1", dono="Dono 1", data_de_criacao=123456789, vagas=5, responsavel=self.professor)
+        self.projeto = Projeto.objects.create(nome="Projeto 1", descricao="Descrição 1", laboratorio="Dono 1", data_de_criacao=123456789, vagas=5, responsavel=self.professor)
         self.url = reverse('get_by_id_projeto', kwargs={'id_projeto': self.projeto.id_projeto})
 
     def test_get_by_id_projeto_sucesso(self):
@@ -139,8 +139,8 @@ class GetAllProjetosByProfessorViewTest(APITestCase):
         self.client = APIClient()
         self.professor = Professor.objects.create(nome="Jorge", email="jorge@example.com", senha="1234")
         self.url = reverse('get_all_projetos_by_professor')
-        Projeto.objects.create(nome="Projeto 1", descricao="Descrição 1", dono="Dono 1", data_de_criacao=123456789, vagas=5, responsavel=self.professor)
-        Projeto.objects.create(nome="Projeto 2", descricao="Descrição 2", dono="Dono 2", data_de_criacao=123456780, vagas=3, responsavel=self.professor)
+        Projeto.objects.create(nome="Projeto 1", descricao="Descrição 1", laboratorio="Dono 1", data_de_criacao=123456789, vagas=5, responsavel=self.professor)
+        Projeto.objects.create(nome="Projeto 2", descricao="Descrição 2", laboratorio="Dono 2", data_de_criacao=123456780, vagas=3, responsavel=self.professor)
 
     def test_get_all_projetos_by_professor_sucesso(self):
         response = self.client.get(self.url, {'responsavel': self.professor.id_professor}, format='json')
