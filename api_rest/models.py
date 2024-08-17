@@ -7,8 +7,7 @@ class Professor(models.Model):
     senha = models.TextField(null=False)
 
     def __str__(self):
-        return (f'id_Professor: {self.id_professor}\n'
-                f'nome: {self.nome}\n'
+        return (f'nome: {self.nome}\n'
                 f'email: {self.email}\n'
                 f'senha: {self.senha}')
 
@@ -34,7 +33,7 @@ class Aluno(models.Model):
     
 class Projeto(models.Model):
     id_projeto = models.AutoField(primary_key=True)
-    nome = models.TextField(null=False)
+    nome = models.TextField()
     descricao = models.TextField()
     dono = models.TextField()
     data_de_criacao = models.BigIntegerField()
@@ -42,8 +41,7 @@ class Projeto(models.Model):
     responsavel = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
 
     def __str__(self):
-        return (f'id_projeto: {self.id_projeto}\n'
-                f'nome: {self.nome}\n'
+        return (f'nome: {self.nome}\n'
                 f'descrição: {self.descricao}\n'
                 f'dono: {self.dono}\n'
                 f'data de criação: {self.data_de_criacao}\n'

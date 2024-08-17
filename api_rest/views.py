@@ -118,14 +118,16 @@ def get_by_id_projeto(request, id_projeto):
 @api_view(['GET'])
 def get_all_projetos_by_professor(request):
     if request.method == 'GET':
-        responsavel = request.GET['responsavel']
-        if responsavel is not None:
-            try:
-                projetos = Projeto.objects.filter(responsavel__id_professor=responsavel)
-                serializer = ProjetoSerializer(projetos, many=True)
-                return Response(serializer.data)
-            except Projeto.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-        else:
+        try:
+            responsavel_id = request.GET.get('responsavel')
+            responsavel = Professor.objects.get(pk=responsavel_id)
+        except:
             return Response({"detail": "O parâmetro 'responsavel' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        try:
+            projetos = Projeto.objects.filter(responsavel=responsavel)
+            serializer = ProjetoSerializer(projetos, many=True)
+            return Response(serializer.data)
+        except Projeto.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED) 
