@@ -1,7 +1,7 @@
 from django.db import models
 
 class Professor(models.Model):
-    id_professor = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     nome = models.TextField(null=False)
     email = models.TextField(null=False, unique=True)
     senha = models.TextField(null=False)
@@ -10,6 +10,9 @@ class Professor(models.Model):
         return (f'nome: {self.nome}\n'
                 f'email: {self.email}\n'
                 f'senha: {self.senha}')
+        
+    def checar_senha(self, senha):
+        return self.senha == senha
 
 class Aluno(models.Model):
     matricula = models.CharField(max_length=9, primary_key=True)
