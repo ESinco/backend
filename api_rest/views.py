@@ -3,6 +3,7 @@ from django.http import HttpResponse, JsonResponse
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 
 from .models import Professor, Aluno
@@ -45,6 +46,27 @@ def get_by_id_professor(request, id_professor):
         serializer = ProfessorSerializer(professor)
         return Response(serializer.data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+def login_professor(request):
+    email = request.data.get('email')
+    senha = request.data.get('senha')
+
+    try:
+        professor = Professor.objects.get(email=email)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Professor não encontrado."}, status=404)
+
+    if not professor.checar_senha(senha):
+        return Response({"detail": "Senha incorreta."}, status=401)
+
+    # Gerar tokens JWT
+    refresh = RefreshToken.for_user(professor)
+
+    return Response({
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    })
 
 @api_view(['POST'])
 def criar_aluno(request):
