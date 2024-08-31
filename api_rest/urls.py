@@ -14,4 +14,6 @@ urlpatterns = [
     path('projeto/all/', views.get_projetos, name='get_projetos'),
     path('projeto/<int:id_projeto>/', views.get_by_id_projeto, name='get_by_id_projeto'),
     path('projeto/', views.get_all_projetos_by_professor, name='get_all_projetos_by_professor'),
+    path('historico/upload/', views.upload_historico, name='upload_historico'),
+    path('historico/<str:matricula>/', views.visualizar_historico, name='visualizar_historico'),
 ]

@@ -30,7 +30,7 @@ class Aluno(models.Model):
                 f'linkedin: {self.linkedin}'
                 f'cra: {self.cra}'
                 f'senha: {self.senha}')
-    
+
 class Projeto(models.Model):
     id_projeto = models.AutoField(primary_key=True)
     nome = models.TextField()
@@ -47,7 +47,7 @@ class Projeto(models.Model):
                 f'data de criação: {self.data_de_criacao}\n'
                 f'vagas: {self.vagas}\n'
                 f'responsavel: {self.responsavel}')
-    
+
 class Tags(models.Model):
     nome = models.TextField()
     grupo = models.TextField()
@@ -55,3 +55,26 @@ class Tags(models.Model):
     def __str__(self):
         return f'{self.grupo}: {self.nome}'
 
+class Disciplina(models.Model):
+    historico = models.ForeignKey('HistoricoAcademico', related_name='disciplinas', on_delete=models.CASCADE)
+    codigo = models.CharField(max_length=20)
+    nome = models.CharField(max_length=100)
+    professor = models.CharField(max_length=300)
+    tipo = models.CharField(max_length=50)
+    creditos = models.IntegerField()
+    carga_horaria = models.IntegerField()
+    media = models.FloatField(null=True, blank=True)
+    situacao = models.CharField(max_length=50)
+    periodo = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.nome} - {self.media}"
+
+class HistoricoAcademico(models.Model):
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
+    historico_pdf = models.FileField(upload_to='historicos/')
+    cra = models.FloatField(null=True, blank=True)
+    # Não é necessário adicionar ManyToMany aqui; apenas use a relação inversa a partir de Disciplina
+
+    def __str__(self):
+        return f"Histórico de {self.aluno.nome}"

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Professor, Aluno, Projeto
+from .models import Professor, Aluno, Projeto, Disciplina, HistoricoAcademico
 
 
 class ProfessorSerializer(serializers.ModelSerializer):
@@ -27,3 +27,15 @@ class ProjetoSemIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projeto
         fields = ['nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel']
+
+class DisciplinaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Disciplina
+        fields = '__all__'
+
+class HistoricoAcademicoSerializer(serializers.ModelSerializer):
+    disciplinas = DisciplinaSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = HistoricoAcademico
+        fields = ['id', 'aluno', 'historico_pdf', 'cra', 'disciplinas']
