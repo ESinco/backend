@@ -72,9 +72,7 @@ class Disciplina(models.Model):
 
 class HistoricoAcademico(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
-    historico_pdf = models.FileField(upload_to='historicos/')
     cra = models.FloatField(null=True, blank=True)
-    # Não é necessário adicionar ManyToMany aqui; apenas use a relação inversa a partir de Disciplina
 
     def __str__(self):
         return f"Histórico de {self.aluno.nome}"

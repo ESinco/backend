@@ -2,12 +2,11 @@ import pdfplumber
 from .models import Disciplina
 
 
-def extrair_disciplinas_do_pdf(historico_academico):
-    pdf_path = historico_academico.historico_pdf.path
+def extrair_disciplinas_do_pdf(historico_academico, historico_pdf):
     total_creditos = 0
     soma_pontuada = 0
 
-    with pdfplumber.open(pdf_path) as pdf:
+    with pdfplumber.open(historico_pdf) as pdf:
         for page in pdf.pages:
             # Extrai as linhas de texto da página
             lines = page.extract_text().splitlines()
@@ -56,7 +55,6 @@ def extrair_disciplinas_do_pdf(historico_academico):
 
                     nomes_professores = []
                     i += 1
-                    max_professores = 3
 
                     while i < len(lines):
                         line = lines[i].strip()

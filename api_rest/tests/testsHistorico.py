@@ -11,7 +11,6 @@ class HistoricoAcademicoTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        # Cria o aluno
         cls.aluno = Aluno.objects.create(
             matricula="123456789",
             nome="João da Silva",
@@ -22,7 +21,7 @@ class HistoricoAcademicoTests(APITestCase):
             cra=9.3,
             senha="senhaSegura"
         )
-        cls.url_upload = '/historico/upload/'
+        cls.url_upload = reverse('upload_historico')
 
         # Caminho para o PDF de teste
         cls.pdf_path = os.path.join(os.path.dirname(__file__), 'test_data', 'historico.pdf')
@@ -30,23 +29,27 @@ class HistoricoAcademicoTests(APITestCase):
         if not os.path.exists(cls.pdf_path):
             raise FileNotFoundError(f"O arquivo PDF não foi encontrado em {cls.pdf_path}")
 
-        with open(cls.pdf_path, 'rb') as pdf_file:
-            cls.historico_data = {
-                "aluno": cls.aluno.matricula,
-                "historico_pdf": SimpleUploadedFile("historico.pdf", pdf_file.read())
-            }
-
         cls.url_visualizar = reverse('visualizar_historico', kwargs={'matricula': cls.aluno.matricula})
 
     def test_upload_historico(self):
-        response = self.client.post(self.url_upload, data=self.historico_data, format='multipart')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with open(self.pdf_path, 'rb') as pdf_file:
+            response = self.client.post(
+                self.url_upload,
+                data={'aluno': self.aluno.matricula, 'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
+                format='multipart'
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            historico = HistoricoAcademico.objects.filter(aluno=self.aluno).first()
+            self.assertIsNotNone(historico)
+
+            disciplinas = Disciplina.objects.filter(historico=historico)
+            self.assertGreater(len(disciplinas), 0)
 
     def test_visualizar_historico(self):
         self.test_upload_historico()
-
         response = self.client.get(self.url_visualizar)
-        assert response.status_code == status.HTTP_200_OK
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_visualizar_historico_aluno_nao_existe(self):
         url = reverse('visualizar_historico', kwargs={'matricula': '999999999'})
@@ -54,30 +57,17 @@ class HistoricoAcademicoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_visualizar_historico_sem_historico(self):
-        aluno_sem_historico = Aluno.objects.create(
-            matricula="987654321",
-            nome="Maria Oliveira",
-            email="maria.oliveira@example.com",
-            curriculo="Link do curriculo",
-            github="https://github.com/mariaoliveira",
-            linkedin="https://linkedin.com/in/mariaoliveira",
-            cra=0.0,
-            senha="senhaSegura"
-        )
-        url = reverse('visualizar_historico', kwargs={'matricula': aluno_sem_historico.matricula})
-        response = self.client.get(url)
+        response = self.client.get(self.url_visualizar)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_verificar_dados_processados(self):
         self.test_upload_historico()
-
         historico = HistoricoAcademico.objects.get(aluno=self.aluno)
 
         self.assertIsNotNone(historico.cra)
         print(f"CRA: {historico.cra}")
 
         disciplinas = Disciplina.objects.filter(historico=historico)
-
         self.assertGreater(len(disciplinas), 0)
         for disciplina in disciplinas:
             print(

@@ -141,8 +141,8 @@ def upload_historico(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     try:
-        historico = HistoricoAcademico.objects.create(aluno=aluno, historico_pdf=historico_pdf)
-        extrair_disciplinas_do_pdf(historico)
+        historico = HistoricoAcademico.objects.create(aluno=aluno)
+        extrair_disciplinas_do_pdf(historico, historico_pdf)
         return Response(status=status.HTTP_200_OK)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)

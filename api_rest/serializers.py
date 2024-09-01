@@ -38,4 +38,4 @@ class HistoricoAcademicoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = HistoricoAcademico
-        fields = ['id', 'aluno', 'historico_pdf', 'cra', 'disciplinas']
+        fields = ['id', 'aluno', 'cra', 'disciplinas']
