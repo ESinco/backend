@@ -55,5 +55,5 @@ class Tags(models.Model):
     grupo = models.TextField()
 
     def __str__(self):
-        return f'Habilidade: {self.nome}'
+        return f'{self.grupo}: {self.nome}'
 
