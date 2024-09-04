@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api_rest',
     'rest_framework_simplejwt',
+    'pytz'
 ]
 
 REST_FRAMEWORK = {
@@ -140,7 +141,7 @@ TIME_ZONE = 'America/Fortaleza'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
