@@ -7,7 +7,7 @@ from .models import Professor, Aluno, Projeto
 class ProfessorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Professor
-        fields = '__all__'
+        fields = ['id', 'nome', 'email']
         
 class ProfessorPostSerializer(serializers.ModelSerializer):
     senha = serializers.CharField(write_only=True)
