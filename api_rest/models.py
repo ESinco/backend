@@ -26,9 +26,9 @@ class Aluno(models.Model):
         return (f'matricula: {self.matricula}\n'
                 f'nome: {self.nome}\n'
                 f'email: {self.email}\n'
-                f'curriculo: {self.curriculo}'
-                f'github: {self.github}'
-                f'linkedin: {self.linkedin}'
+                f'curriculo: {self.curriculo}\n'
+                f'github: {self.github}\n'
+                f'linkedin: {self.linkedin}\n'
                 f'cra: {self.cra}')
     
 class Projeto(models.Model):
