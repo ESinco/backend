@@ -55,7 +55,7 @@ REST_FRAMEWORK = {
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'fk8kb4o=x6xir4a)jj%ckp+16!k#2jh)01^!f&eihiv$f#sdn=')
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
