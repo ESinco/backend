@@ -11,10 +11,15 @@ from api_rest.models import Professor
 class ProfessorModelTest(TestCase):
 
     def setUp(self):
+        usuario = User.objects.create_user(
+            username='andre@example.com',
+            email='andre@example.com',
+            password='1234'
+        )
         self.professor = Professor.objects.create(
             nome='Andre Souza',
             email='andre@example.com',
-            senha= '1234'
+            user = usuario
         )
 
     def test_professor_creation(self):
@@ -22,11 +27,13 @@ class ProfessorModelTest(TestCase):
         self.assertIsInstance(self.professor, Professor)
         self.assertEqual(self.professor.nome, 'Andre Souza')
         self.assertEqual(self.professor.email, 'andre@example.com')
+        self.assertEqual(self.professor.user.email, 'andre@example.com')
+        self.assertEqual(self.professor.user.username, 'andre@example.com')
+        self.assertTrue(self.professor.user.check_password('1234'))
 
     def test_professor_str(self):
         expected_str = ('nome: Andre Souza\n'
-                        'email: andre@example.com\n'
-                        'senha: 1234')
+                        'email: andre@example.com')
         
         #Asserts
         self.assertEqual(str(self.professor), expected_str)
@@ -118,9 +125,18 @@ class getAllProfessorViewTest(APITestCase):
         self.client = APIClient()
         self.url = reverse('get_all_professores')
         
-        Professor.objects.create(nome="Andrey", email="andrey@example.com", senha="213")
-        Professor.objects.create(nome="Fabio", email="fabio@example.com", senha="123")
-        Professor.objects.create(nome="Wilkerson", email="wilkerson@example.com", senha="321")
+        usuario = User.objects.create_user(username='andrey@example.com', 
+                                           email='andrey@example.com',
+                                           password='213')
+        Professor.objects.create(nome="Andrey", email="andrey@example.com", user = usuario)
+        usuario = User.objects.create_user(username='fabio@example.com', 
+                                           email='fabio@example.com',
+                                           password='123')
+        Professor.objects.create(nome="Fabio", email="fabio@example.com", user = usuario)
+        usuario = User.objects.create_user(username='wilkerson@example.com', 
+                                           email='wilkerson@example.com',
+                                           password='321')        
+        Professor.objects.create(nome="Wilkerson", email="wilkerson@example.com", user = usuario)
     
     def test_get_all_professores_sucesso(self):
         response = self.client.get(self.url, format='json')
@@ -149,12 +165,21 @@ class getProfessorPorIdTest(APITestCase):
     def setUp(self):
         self.client = APIClient()
         
-        self.professor1 = Professor.objects.create(nome="Andrey", email="andrey@example.com", senha="213")
-        self.professor2 = Professor.objects.create(nome="Fabio", email="fabio@example.com", senha="123")
-        self.professor3 = Professor.objects.create(nome="Wilkerson", email="wilkerson@example.com", senha="321")
+        usuario = User.objects.create_user(username='andrey@example.com', 
+                                           email='andrey@example.com',
+                                           password='213')
+        self.professor1 = Professor.objects.create(nome="Andrey", email="andrey@example.com", user = usuario)
+        usuario = User.objects.create_user(username='fabio@example.com', 
+                                           email='fabio@example.com',
+                                           password='123')
+        self.professor2 = Professor.objects.create(nome="Fabio", email="fabio@example.com", user = usuario)
+        usuario = User.objects.create_user(username='wilkerson@example.com', 
+                                           email='wilkerson@example.com',
+                                           password='321')        
+        self.professor3 = Professor.objects.create(nome="Wilkerson", email="wilkerson@example.com", user = usuario)
 
     def test_get_professor_by_id_sucesso(self):
-        url = reverse('get_by_id_professor', kwargs={'id_professor': self.professor1.id_professor})
+        url = reverse('get_by_id_professor', kwargs={'id_professor': self.professor1.id})
         response = self.client.get(url)
         
         #Asserts
