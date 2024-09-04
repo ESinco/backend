@@ -21,8 +21,10 @@ def criar_professor(request):
         serializer = ProfessorPostSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+        
         professor = serializer.save()
-        response_serializer = ProfessorSerializer(data=professor)
+        response_serializer = ProfessorSerializer(professor)
+        
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
