@@ -13,6 +13,7 @@ class Professor(models.Model):
                 f'email: {self.email}')
 
 class Aluno(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
     matricula = models.CharField(max_length=9, primary_key=True)
     nome = models.TextField()
     email = models.TextField(unique=True)
@@ -20,7 +21,6 @@ class Aluno(models.Model):
     github = models.TextField(null=True)
     linkedin = models.TextField(null=True)
     cra = models.FloatField(null=True)
-    senha = models.TextField()
 
     def __str__(self):
         return (f'matricula: {self.matricula}\n'
@@ -29,8 +29,7 @@ class Aluno(models.Model):
                 f'curriculo: {self.curriculo}'
                 f'github: {self.github}'
                 f'linkedin: {self.linkedin}'
-                f'cra: {self.cra}'
-                f'senha: {self.senha}')
+                f'cra: {self.cra}')
     
 class Projeto(models.Model):
     id_projeto = models.AutoField(primary_key=True)
