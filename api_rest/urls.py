@@ -11,6 +11,7 @@ urlpatterns = [
     path('professor/login/', views.login_professor, name='login_professor'),
     path('aluno/', views.get_all_alunos, name='get_all_alunos'),
     path('aluno/cadastrar/', views.criar_aluno, name='criar_aluno'),
+    path('aluno/login/', views.login_aluno, name='login_aluno'),
     path('aluno/<str:matricula>/', views.get_by_matricula_aluno, name='get_by_matricula_aluno'),
     path('projeto/cadastrar/', views.criar_projeto, name='criar_projeto'),
     path('projeto/all/', views.get_projetos, name='get_projetos'),
