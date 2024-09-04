@@ -59,6 +59,11 @@ def login_professor(request):
     except User.DoesNotExist:
         return Response({"detail": "Professor não encontrado."}, status=404)
 
+    try:
+        professor = Professor.objects.get(user=user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Professor não encontrado."}, status=404)
+
     if not user.check_password(senha):
         return Response({"detail": "Senha incorreta."}, status=401)
 
@@ -72,16 +77,14 @@ def login_professor(request):
 @api_view(['POST'])
 def criar_aluno(request):
     if request.method == 'POST':
-        novo_aluno = request.data
-        serializer = AlunoSerializer(data=novo_aluno)
-
-        if serializer.is_valid():
-            aluno = serializer.save()
-            response_serializer = AlunoSerializer(aluno)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        serializer = AlunoPostSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+        
+        aluno = serializer.save()
+        response_serializer = AlunoSerializer(aluno)
+        
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
@@ -105,6 +108,30 @@ def get_by_matricula_aluno(request, matricula):
         return Response(serializer.data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+@api_view(['POST'])
+def login_aluno(request):
+    email = request.data.get('email')
+    senha = request.data.get('senha')
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"detail": "Aluno não encontrado."}, status=404)
+
+    try:
+        aluno = Aluno.objects.get(user=user)
+    except Aluno.DoesNotExist:
+        return Response({"detail": "Aluno não encontrado."}, status=404)
+    
+    if not user.check_password(senha):
+        return Response({"detail": "Senha incorreta."}, status=401)
+
+    refresh = RefreshToken.for_user(user)
+
+    return Response({
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    })
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
