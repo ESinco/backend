@@ -1,18 +1,17 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Professor(models.Model):
     id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
     nome = models.TextField(null=False)
     email = models.TextField(null=False, unique=True)
-    senha = models.TextField(null=False)
 
     def __str__(self):
         return (f'nome: {self.nome}\n'
                 f'email: {self.email}\n'
                 f'senha: {self.senha}')
-        
-    def checar_senha(self, senha):
-        return self.senha == senha
 
 class Aluno(models.Model):
     matricula = models.CharField(max_length=9, primary_key=True)
@@ -39,7 +38,7 @@ class Projeto(models.Model):
     nome = models.TextField()
     descricao = models.TextField()
     laboratorio = models.TextField()
-    data_de_criacao = models.BigIntegerField()
+    data_de_criacao = models.DateTimeField(default=timezone.now)
     vagas = models.IntegerField()
     responsavel = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
 
@@ -47,7 +46,7 @@ class Projeto(models.Model):
         return (f'nome: {self.nome}\n'
                 f'descrição: {self.descricao}\n'
                 f'laboratório: {self.laboratorio}\n'
-                f'data de criação: {self.data_de_criacao}\n'
+                f'data de criação: {self.data_de_criacao.strftime("%d/%m/%Y")}\n'
                 f'vagas: {self.vagas}\n'
                 f'responsavel: {self.responsavel}')
     
