@@ -10,8 +10,7 @@ class Professor(models.Model):
 
     def __str__(self):
         return (f'nome: {self.nome}\n'
-                f'email: {self.email}\n'
-                f'senha: {self.senha}')
+                f'email: {self.email}\n')
 
 class Aluno(models.Model):
     matricula = models.CharField(max_length=9, primary_key=True)
