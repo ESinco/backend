@@ -3,10 +3,12 @@ __pycache__/
 backend/__pycache__/
 *.py[cod]
 *$py.class
-
+test.rest
 # C extensions
 *.so
 
+*/migrations/*
+!*/migrations/__init__.py
 # Distribution / packaging
 .Python
 build/

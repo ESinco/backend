@@ -1,28 +1,31 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
+from django.contrib.auth.models import User
+from django.utils import timezone
 
-from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 
 from .models import Professor, Aluno
 from .serializers import *
 
+import time
 import json
 
 @api_view(['POST'])
 def criar_professor(request):
     if request.method == 'POST':
-        novo_professor = request.data
-        serializer = ProfessorSemIdSerializer(data=novo_professor)
-
-        if serializer.is_valid():
-            professor = serializer.save()
-            response_serializer = ProfessorSerializer(professor)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        serializer = ProfessorPostSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+        
+        professor = serializer.save()
+        response_serializer = ProfessorSerializer(professor)
+        
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
@@ -45,6 +48,26 @@ def get_by_id_professor(request, id_professor):
         serializer = ProfessorSerializer(professor)
         return Response(serializer.data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+def login_professor(request):
+    email = request.data.get('email')
+    senha = request.data.get('senha')
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"detail": "Professor não encontrado."}, status=404)
+
+    if not user.check_password(senha):
+        return Response({"detail": "Senha incorreta."}, status=401)
+
+    refresh = RefreshToken.for_user(user)
+
+    return Response({
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    })
 
 @api_view(['POST'])
 def criar_aluno(request):
@@ -84,10 +107,24 @@ def get_by_matricula_aluno(request, matricula):
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def criar_projeto(request):
-    if request.method == 'POST':
-        serializer = ProjetoSemIdSerializer(data=request.data)
+    try:
+        professor_autenticado = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
 
+    if request.method == 'POST':
+        serializer = ProjetoPostSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = request.data.copy()
+        data['responsavel'] = professor_autenticado.id
+        
+        data['data_de_criacao'] = timezone.now()
+        
+        serializer = ProjetoSemIdSerializer(data=data)
         if serializer.is_valid():
             projeto = serializer.save()
             response_serializer = ProjetoSerializer(projeto)
