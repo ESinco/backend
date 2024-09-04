@@ -26,10 +26,27 @@ class ProfessorPostSerializer(serializers.ModelSerializer):
         professor = Professor.objects.create(user=usuario, **validated_data)
         return professor
     
+class AlunoPostSerializer(serializers.ModelSerializer):
+    senha = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = Aluno
+        fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin', 'senha']
+
+    def create(self, validated_data):
+        senha = validated_data.pop('senha')
+        usuario = User.objects.create_user(
+            username=validated_data['email'],
+            email=validated_data['email'],
+            password=senha
+        )
+        aluno = Aluno.objects.create(user=usuario, **validated_data)
+        return aluno
+            
 class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
-        fields = '__all__'
+        fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin', 'cra']
 
 class ProjetoSerializer(serializers.ModelSerializer):
     data_de_criacao = serializers.DateTimeField(format="%d/%m/%Y")
