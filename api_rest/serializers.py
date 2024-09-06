@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
+from .models import Professor, Aluno, Projeto, Disciplina, HistoricoAcademico
+
 from django.contrib.auth.models import User
-from .models import Professor, Aluno, Projeto
 
 
 class ProfessorSerializer(serializers.ModelSerializer):
@@ -64,3 +65,15 @@ class ProjetoPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projeto
         fields = ['nome', 'descricao', 'laboratorio', 'vagas']
+  
+class DisciplinaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Disciplina
+        fields = '__all__'
+
+class HistoricoAcademicoSerializer(serializers.ModelSerializer):
+    disciplinas = DisciplinaSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = HistoricoAcademico
+        fields = ['id', 'aluno', 'cra', 'disciplinas']

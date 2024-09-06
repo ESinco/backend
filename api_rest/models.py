@@ -61,3 +61,24 @@ class Tags(models.Model):
     def __str__(self):
         return f'{self.grupo}: {self.nome}'
 
+class Disciplina(models.Model):
+    historico = models.ForeignKey('HistoricoAcademico', related_name='disciplinas', on_delete=models.CASCADE)
+    codigo = models.CharField(max_length=20)
+    nome = models.CharField(max_length=100)
+    professor = models.CharField(max_length=300)
+    tipo = models.CharField(max_length=50)
+    creditos = models.IntegerField()
+    carga_horaria = models.IntegerField()
+    media = models.FloatField(null=True, blank=True)
+    situacao = models.CharField(max_length=50)
+    periodo = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.nome} - {self.media}"
+
+class HistoricoAcademico(models.Model):
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
+    cra = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Histórico de {self.aluno.nome}"

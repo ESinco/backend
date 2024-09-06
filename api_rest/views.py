@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 
+from .utils import extrair_disciplinas_do_pdf
 from .models import *
 from .serializers import *
 
@@ -240,5 +241,59 @@ def get_all_projetos_by_professor(request):
             return Response(serializer.data)
         except Projeto.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED) 
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+def upload_historico(request):
+    aluno_id = request.data.get('aluno')
+    historico_pdf = request.FILES.get('historico_pdf')
+
+    if not aluno_id or not historico_pdf:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        aluno = Aluno.objects.get(pk=aluno_id)
+    except Aluno.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        historico = HistoricoAcademico.objects.create(aluno=aluno)
+        extrair_disciplinas_do_pdf(historico, historico_pdf)
+        return Response(status=status.HTTP_200_OK)
+    except Exception:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def visualizar_historico(request, matricula):
+    try:
+        aluno = Aluno.objects.get(pk=matricula)
+        historico = aluno.historicoacademico_set.first()
+        if not historico:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        disciplinas = historico.disciplinas.all()
+        disciplinas_data = [
+            {
+                "codigo": disciplina.codigo,
+                "nome": disciplina.nome,
+                "professor": disciplina.professor,
+                "tipo": disciplina.tipo,
+                "creditos": disciplina.creditos,
+                "carga_horaria": disciplina.carga_horaria,
+                "media": disciplina.media,
+                "situacao": disciplina.situacao,
+                "periodo": disciplina.periodo
+            }
+            for disciplina in disciplinas
+        ]
+
+        response_data = {
+            "cra": historico.cra,
+            "disciplinas": disciplinas_data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    except Aluno.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    except Exception:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
