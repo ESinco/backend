@@ -11,11 +11,16 @@ from api_rest.models import Aluno
 class AlunoModelTest(TestCase):
 
     def setUp(self):
+        usuario = User.objects.create_user(
+            username='andre@example.com',
+            email='andre@example.com',
+            password='1234'
+        )
         self.aluno = Aluno.objects.create(
             matricula='121210210',
             nome='Andre Souza',
             email='andre@example.com',
-            senha= '1234'
+            user=usuario
         )
 
     def test_aluno_creation(self):
@@ -24,17 +29,16 @@ class AlunoModelTest(TestCase):
         self.assertEqual(self.aluno.matricula, '121210210')
         self.assertEqual(self.aluno.nome, 'Andre Souza')
         self.assertEqual(self.aluno.email, 'andre@example.com')
-        self.assertEqual(self.aluno.senha, '1234')
+        self.assertTrue(self.aluno.user.check_password('1234'))
 
     def test_aluno_str(self):
         expected_str = (f'matricula: 121210210\n'
                         f'nome: Andre Souza\n'
                         f'email: andre@example.com\n'
-                        f'curriculo: None'
-                        f'github: None'
-                        f'linkedin: None'
-                        f'cra: None'
-                        f'senha: 1234')
+                        f'curriculo: None\n'
+                        f'github: None\n'
+                        f'linkedin: None\n'
+                        f'cra: None')
                 
         #Asserts
         self.assertEqual(str(self.aluno), expected_str)
@@ -144,10 +148,24 @@ class getAllAlunoViewTest(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('get_all_alunos')
-        
-        Aluno.objects.create(matricula = "121210110", nome="Andre", email="andre@example.com", senha="213")
-        Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", senha="123")
-        Aluno.objects.create(matricula = "121210310", nome="Luana", email="luana@example.com", senha="321")
+        usuario = User.objects.create_user(
+            username='andre@example.com',
+            email='andre@example.com',
+            password='213'
+        )        
+        Aluno.objects.create(matricula = "121210110", nome="Andre", email="andre@example.com", user=usuario)
+        usuario = User.objects.create_user(
+            username='rian@example.com',
+            email='rian@example.com',
+            password='213'
+        )
+        Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", user=usuario)
+        usuario = User.objects.create_user(
+            username='luana@example.com',
+            email='luana@example.com',
+            password='213'
+        )
+        Aluno.objects.create(matricula = "121210310", nome="Luana", email="luana@example.com", user=usuario)
         
     def test_get_all_alunos_sucesso(self):
         response = self.client.get(self.url, format='json')
@@ -174,9 +192,18 @@ class getAlunoPorMatriculaTest(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
-        
-        self.aluno1 = Aluno.objects.create(matricula = "121210110", nome="Andre", email="andre@example.com", senha="213")
-        self.aluno2 = Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", senha="123")
+        usuario = User.objects.create_user(
+            username='andre@example.com',
+            email='andre@example.com',
+            password='213'
+        )
+        self.aluno1 = Aluno.objects.create(matricula = "121210110", nome="Andre", email="andre@example.com", user=usuario)
+        usuario = User.objects.create_user(
+            username='rian@example.com',
+            email='rian@example.com',
+            password='213'
+        )
+        self.aluno2 = Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", user=usuario)
 
     def test_get_Aluno_by_matricula_sucesso1(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': self.aluno1.matricula})
@@ -195,7 +222,6 @@ class getAlunoPorMatriculaTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['matricula'], self.aluno1.matricula)
-        self.assertEqual(response.data['senha'], self.aluno1.senha)
 
     def test_get_Aluno_by_matricula_inexistente(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': 999999999})
@@ -203,3 +229,4 @@ class getAlunoPorMatriculaTest(APITestCase):
         
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
