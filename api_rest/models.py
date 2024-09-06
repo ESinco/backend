@@ -34,10 +34,10 @@ class Aluno(models.Model):
 class Projeto(models.Model):
     id_projeto = models.AutoField(primary_key=True)
     nome = models.TextField()
-    descricao = models.TextField()
-    laboratorio = models.TextField()
+    descricao = models.TextField(null=True)
+    laboratorio = models.TextField(null=True)
+    vagas = models.IntegerField(null=True)
     data_de_criacao = models.DateTimeField(default=timezone.now)
-    vagas = models.IntegerField()
     responsavel = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -47,7 +47,13 @@ class Projeto(models.Model):
                 f'data de criação: {self.data_de_criacao.strftime("%d/%m/%Y")}\n'
                 f'vagas: {self.vagas}\n'
                 f'responsavel: {self.responsavel}')
-    
+
+class Associacao(models.Model):
+    id_associacao = models.AutoField(primary_key=True)
+    projeto = models.ForeignKey(Projeto, null= False, on_delete=models.CASCADE)
+    aluno = models.ForeignKey(Aluno, null=False, on_delete=models.CASCADE)
+    status = models.TextField(null=True)
+
 class Tags(models.Model):
     nome = models.TextField()
     grupo = models.TextField()
