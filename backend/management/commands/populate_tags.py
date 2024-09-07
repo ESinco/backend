@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from api_rest.models import Tags
+from api_aluno.models import Tags
+
 
 class Command(BaseCommand):
     help = 'Populate the Tags table with initial data'

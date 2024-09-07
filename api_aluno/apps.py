@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class ProjetinConfig(AppConfig):
+class ApiAlunoConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'ProjetIn'
+    name = 'api_aluno'

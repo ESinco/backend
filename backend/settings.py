@@ -15,6 +15,7 @@ from datetime import timedelta
 from django.conf import settings # type: ignore
 import os
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,9 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
-    'ProjetIn.apps.ProjetinConfig',
     'rest_framework',
-    'api_rest',
+    'api_aluno',
+    'api_professor',
+    'api_projeto',
+    'pdfplumber',
     'rest_framework_simplejwt',
     'pytz'
 ]

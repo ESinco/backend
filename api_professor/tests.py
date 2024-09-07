@@ -3,8 +3,9 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.urls import reverse
 
-from api_rest.views import *
-from api_rest.models import Professor
+from api_professor.views import *
+from api_professor.models import Professor
+
 
 #Models
 # Testando model de professor.
