@@ -9,7 +9,9 @@ from django.test import TestCase
 from django.utils import timezone
 from datetime import datetime
 
-from api_projeto.models import Professor, Aluno, Projeto, Associacao
+from api_projeto.models import Projeto, Associacao
+from api_professor.models import Professor
+from api_aluno.models import Aluno
 from api_projeto.views import *
 
 from io import StringIO
@@ -109,6 +111,57 @@ class CriarProjetoViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
+    def test_criar_projeto_token_invalido(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer TOKEN_INVALIDO')
+        response = self.client.post(self.url, self.projeto_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertIn("code", response.data)
+        self.assertIn("messages", response.data)
+        self.assertEqual("token_not_valid", response.data["code"])
+        self.assertEqual("O token é inválido ou expirado", response.data["messages"]["message"])
+    
+    def test_criar_projeto_token_invalido(self):
+        usuario = User.objects.create_user(
+            username='fabio1@example.com',
+            email='fabio1@example.com',
+            password='1234'
+        )
+        refresh = RefreshToken.for_user(usuario)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer ${refresh}')
+        response = self.client.post(self.url, self.projeto_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertIn("code", response.data)
+        self.assertIn("messages", response.data)
+        self.assertEqual("token_not_valid", response.data["code"])
+        self.assertEqual("O token é inválido ou expirado", str(response.data["messages"][0]["message"]))
+        
+    def test_criar_projeto_token_aluno(self):
+        usuario = User.objects.create_user(
+            username='andre@example.com',
+            email='andre@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula='121210210',
+            nome='Andre Souza',
+            email='andre@example.com',
+            user=usuario
+        )
+        refresh = RefreshToken.for_user(usuario)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        response = self.client.post(self.url, self.projeto_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertEqual("Acesso negado. Apenas professores podem criar projetos.", response.data["detail"])
+
     
 # Testes de GETALL projetos
 class GetProjetosViewTest(APITestCase):
