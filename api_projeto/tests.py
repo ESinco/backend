@@ -326,4 +326,98 @@ class CriarProjetoCSVTests(APITestCase):
         
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class GetAllProjetosByAlunoViewTest(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario_aluno = User.objects.create_user(
+            username='levi@example.com',
+            email='levi@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula="232323232",
+            nome="levi", 
+            email="levi@example.com", 
+            user=self.usuario_aluno
+        )
+        self.usuario_professor = User.objects.create_user(
+            username='professor@teste.com', 
+            email='professor@teste.com',                                              
+            password='senha123'
+        )
+        self.professor = Professor.objects.create(
+            user=self.usuario_professor, 
+            nome='Professor Teste', 
+            email='professor@teste.com'
+        )
+        self.projeto = Projeto.objects.create(
+            nome="Projeto 1", 
+            descricao="Descrição 1", 
+            laboratorio="Dono 1", 
+            vagas=5, 
+            responsavel=self.professor
+        )
+        self.associacao = Associacao.objects.create(
+            projeto=self.projeto,
+            aluno=self.aluno,
+            status=None
+        )
+        self.url = reverse('get_all_projetos_by_aluno')
+        self.refresh = RefreshToken.for_user(self.usuario_aluno)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh.access_token}')
+
+    def test_get_all_projetos_by_aluno_sucesso(self):
+        response = self.client.get(self.url, format='json')
         
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(1, len(response.data))
+        self.assertEqual('Projeto 1', response.data[0]['nome'])
+        self.assertEqual('Descrição 1', response.data[0]['descricao'])
+        self.assertEqual('Dono 1', response.data[0]['laboratorio'])
+        self.assertEqual(5, response.data[0]['vagas'])
+        self.assertEqual(None, response.data[0]['status'])
+
+    def test_get_all_projetos_by_aluno_token_invalido(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer TOKEN_INVALIDO')        
+        response = self.client.get(self.url, format='json')
+        
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertEqual("token_not_valid",response.data['code'])
+        self.assertEqual("O token é inválido ou expirado",response.data['messages'][0]['message'])
+    
+    def test_get_all_projetos_by_aluno_token_do_tipo_errado(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh}')        
+        response = self.client.get(self.url, format='json')
+        
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertEqual("token_not_valid",response.data['code'])
+        self.assertEqual("Token tem tipo errado",response.data['messages'][0]['message'])
+
+    def test_get_all_projetos_by_aluno_token_professor(self):
+        refresh_professor = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh_professor.access_token}')        
+        response = self.client.get(self.url, format='json')
+        
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual("Acesso negado. Apenas alunos podem ver seus próprios projetos inscritos.", response.data['detail'])
+
+    def test_get_all_projetos_by_aluno_sem_projeto(self):
+        usuario_aluno2 = User.objects.create_user(
+            username="fernando@example.com",
+            email="fernando@example.com",
+            password='1234'
+        )
+        self.aluno2 = Aluno.objects.create(
+            matricula="232323233",
+            nome="fernando", 
+            email="fernando@example.com", 
+            user=usuario_aluno2
+        )
+        refresh = RefreshToken.for_user(usuario_aluno2)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')   
+        response = self.client.get(self.url, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual("Nenhum projeto encontrado.", response.data['detail'])
