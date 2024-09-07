@@ -125,3 +125,31 @@ def get_all_projetos_by_professor(request):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_projetos_by_aluno(request):
+    if request.method == 'GET':
+        try:
+            aluno_autenticado = Aluno.objects.get(user=request.user)
+        except Aluno.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas alunos podem ver seus próprios projetos inscritos."},
+                status=status.HTTP_403_FORBIDDEN)
+        
+        associacoes = Associacao.objects.filter(aluno=aluno_autenticado.matricula)
+        projetos_com_status = []
+        for associacao in associacoes:
+            try:
+                projeto = Projeto.objects.get(pk=associacao.projeto.id_projeto)
+                projeto_dados = ProjetoSerializer(projeto).data
+                projeto_dados['status'] = associacao.status
+                projetos_com_status.append(projeto_dados)
+            except Projeto.DoesNotExist:
+                continue
+        
+        if not projetos_com_status:
+            return Response({"detail": "Nenhum projeto encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(projetos_com_status, status=status.HTTP_200_OK)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
