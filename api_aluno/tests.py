@@ -239,6 +239,11 @@ class HistoricoAcademicoTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
+        usuario = User.objects.create_user(
+            username='joao.silva@example.com',
+            email='joao.silva@example.com',
+            password='senhaSegura'
+        )  
         cls.aluno = Aluno.objects.create(
             matricula="123456789",
             nome="João da Silva",
@@ -247,7 +252,7 @@ class HistoricoAcademicoTests(APITestCase):
             github="https://github.com/joaosilva",
             linkedin="https://linkedin.com/in/joaosilva",
             cra=9.3,
-            senha="senhaSegura"
+            user=usuario
         )
         cls.url_upload = reverse('upload_historico')
 
@@ -293,12 +298,6 @@ class HistoricoAcademicoTests(APITestCase):
         historico = HistoricoAcademico.objects.get(aluno=self.aluno)
 
         self.assertIsNotNone(historico.cra)
-        print(f"CRA: {historico.cra}")
 
         disciplinas = Disciplina.objects.filter(historico=historico)
         self.assertGreater(len(disciplinas), 0)
-        for disciplina in disciplinas:
-            print(
-                f"Código: {disciplina.codigo} - Disciplina: {disciplina.nome} - Professor(es): {disciplina.professor} - Tipo: {disciplina.tipo} - Créditos: {disciplina.creditos} -"
-                f" Carga Horária: {disciplina.carga_horaria} - Média: {disciplina.media} - Situação: {disciplina.situacao} - Período: {disciplina.periodo}")
-
