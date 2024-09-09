@@ -65,8 +65,8 @@ def login_professor(request):
         return Response({"detail": "Senha incorreta."}, status=401)
 
     refresh = RefreshToken.for_user(user)
+    response = ProfessorSerializer(professor).data
+    response['refresh'] = str(refresh)
+    response['access'] = str(refresh.access_token)
 
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    })
+    return Response(response)
