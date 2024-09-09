@@ -343,7 +343,7 @@ class LoginAlunoViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('detail', response.data)
-        self.assertEquals('Aluno não encontrado.', response.data['detail'])
+        self.assertEqual('Aluno não encontrado.', response.data['detail'])
 
     def test_login_aluno_com_senha_vazia(self):
         invalid_data = {
@@ -355,7 +355,7 @@ class LoginAlunoViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
-        self.assertEquals('Senha incorreta.', response.data['detail'])
+        self.assertEqual('Senha incorreta.', response.data['detail'])
 
         
     def test_login_aluno_inexistente(self):
@@ -368,7 +368,7 @@ class LoginAlunoViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('detail', response.data)
-        self.assertEquals('Aluno não encontrado.', response.data['detail'])
+        self.assertEqual('Aluno não encontrado.', response.data['detail'])
         
     def test_login_aluno_senha_incorreta(self):
         invalid_data = {
@@ -380,4 +380,4 @@ class LoginAlunoViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
-        self.assertEquals('Senha incorreta.', response.data['detail'])
+        self.assertEqual('Senha incorreta.', response.data['detail'])

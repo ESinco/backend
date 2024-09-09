@@ -235,7 +235,7 @@ class LoginProfessorViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('detail', response.data)
-        self.assertEquals('Professor não encontrado.', response.data['detail'])
+        self.assertEqual('Professor não encontrado.', response.data['detail'])
 
     def test_login_professor_com_senha_vazia(self):
         invalid_data = {
@@ -247,7 +247,7 @@ class LoginProfessorViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
-        self.assertEquals('Senha incorreta.', response.data['detail'])
+        self.assertEqual('Senha incorreta.', response.data['detail'])
 
         
     def test_login_professor_inexistente(self):
@@ -260,7 +260,7 @@ class LoginProfessorViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('detail', response.data)
-        self.assertEquals('Professor não encontrado.', response.data['detail'])
+        self.assertEqual('Professor não encontrado.', response.data['detail'])
         
     def test_login_professor_senha_incorreta(self):
         invalid_data = {
@@ -272,4 +272,4 @@ class LoginProfessorViewTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
-        self.assertEquals('Senha incorreta.', response.data['detail'])
+        self.assertEqual('Senha incorreta.', response.data['detail'])
