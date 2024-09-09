@@ -66,11 +66,10 @@ def login_aluno(request):
         return Response({"detail": "Senha incorreta."}, status=401)
 
     refresh = RefreshToken.for_user(user)
-
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    })
+    response = AlunoSerializer(aluno).data
+    response['refresh'] = str(refresh)
+    response['access'] = str(refresh.access_token)
+    return Response(response)
 
 
 @api_view(['POST'])
