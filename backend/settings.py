@@ -110,7 +110,7 @@ DATABASES = {
         'NAME': 'ProjetIn-db',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'localhost',
+        'HOST': '172.18.0.1',
         'PORT': '5432',
     }
 }
@@ -141,10 +141,11 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'pt-br'
 
 TIME_ZONE = 'America/Fortaleza'
-
 USE_I18N = True
-
 USE_TZ = False
+
+FILE_CHARSET = 'utf-8'
+DEFAULT_CHARSET = 'utf-8'
 
 
 # Static files (CSS, JavaScript, Images)
