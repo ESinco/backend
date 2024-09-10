@@ -6,6 +6,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from api_aluno.views import *
 from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
+from api_professor.models import Professor
+from api_projeto.models import Projeto
+
 
 import os
 
@@ -381,3 +384,52 @@ class LoginAlunoViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
         self.assertEqual('Senha incorreta.', response.data['detail'])
+
+class InteresseNoProjetoTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='aluno@teste.com', password='senha123')
+        self.aluno = Aluno.objects.create(user=self.user, matricula='123456789', nome='Aluno Teste', email='aluno@teste.com')
+        self.userP = User.objects.create_user(username='professor@teste.com', password='senha123')
+        self.professor = Professor.objects.create(user=self.userP, nome='Professor Teste', email='professor@teste.com')
+
+        self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor)
+
+        self.url = reverse('interesse_projeto', args=[self.projeto.id_projeto])
+        self.client.force_authenticate(user=self.user)  
+
+    def test_interesse_no_projeto_sucesso(self):
+        response = self.client.post(self.url, {'projeto_id': self.projeto.id_projeto}, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Associacao.objects.count(), 1)
+        self.assertEqual(Associacao.objects.first().aluno, self.aluno)
+        self.assertEqual(Associacao.objects.first().projeto, self.projeto)
+        
+    def test_interesse_no_projeto_projeto_nao_existe(self):
+        url = reverse('interesse_projeto', args=[9999]) 
+        response = self.client.post(url, {'projeto_id': 9999}, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Projeto não encontrado.')
+        self.assertEqual(Associacao.objects.count(), 0)
+    
+    def test_interesse_no_projeto_associacao_ja_existe(self):
+        Associacao.objects.create(aluno=self.aluno, projeto=self.projeto)
+        
+        url = reverse('interesse_projeto', args=[self.projeto.id_projeto])
+        response = self.client.post(url, {'projeto_id': self.projeto.id_projeto}, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Aluno já está associado a este projeto.')
+        self.assertEqual(Associacao.objects.count(), 1) 
+        
+    def test_interesse_no_projeto_aluno_negado(self):
+        self.client.force_authenticate(user=self.professor.user)
+    
+        url = reverse('interesse_projeto', args=[self.projeto.id_projeto])
+        response = self.client.post(url, {'projeto_id': self.projeto.id_projeto}, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'Acesso negado. Apenas alunos podem se associar a projetos.')
+        self.assertEqual(Associacao.objects.count(), 0)
