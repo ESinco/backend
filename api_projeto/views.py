@@ -68,27 +68,27 @@ def criar_projeto_csv(request):
         
         if len(csv_content.splitlines()) < 2:
             return Response({'detail': 'O arquivo CSV está vazio.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return JsonResponse({'detail': f'Erro ao processar CSV: {str(e)}'}, status=500)
     
-        projeto = Projeto.objects.create(
+    projeto = Projeto.objects.create(
             nome="Projeto Novo",
             data_de_criacao=timezone.now(),
             responsavel=professor_autenticado
         )
-        matricula_inexistente = []
+    matricula_inexistente = []
         
-        for linha in csv_reader:
-            matricula = linha.get('Matricula')
-            if matricula:
-                try:
-                    aluno = Aluno.objects.get(pk=matricula)
-                    Associacao.objects.create(projeto=projeto, aluno=aluno, status=None)
-                except Aluno.DoesNotExist:
-                    matricula_inexistente.append(matricula)
-        
-        return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)
+    for linha in csv_reader:
+        matricula = linha.get('Matricula')
+        if matricula:
+            try:
+                aluno = Aluno.objects.get(pk=matricula)
+                Associacao.objects.create(projeto_id=projeto.id_projeto, aluno_id=aluno.matricula, status=None)
+            except Aluno.DoesNotExist:
+                matricula_inexistente.append(matricula)
     
-    except Exception as e:
-        return JsonResponse({'detail': f'Erro ao processar CSV: {str(e)}'}, status=500)
+    return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)
+    
        
    
 @api_view(['GET'])
