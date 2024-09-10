@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Aluno, Disciplina, HistoricoAcademico
 
@@ -26,7 +27,12 @@ class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin', 'cra']
-        
+
+class AlunoLoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Aluno
+        fields = ['matricula', 'nome', 'email']
+
 class DisciplinaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina
