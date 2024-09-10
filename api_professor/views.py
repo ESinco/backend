@@ -10,6 +10,7 @@ from rest_framework import status
 
 from .models import *
 from .serializers import *
+from api_aluno.models import Aluno
 
 
 @api_view(['POST'])
@@ -70,3 +71,35 @@ def login_professor(request):
     response['access'] = str(refresh.access_token)
 
     return Response(response)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def criar_avaliacao(request, id_aluno):
+    try:
+        professor_autenticado = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas professores podem criar avaliações."}, status=status.HTTP_403_FORBIDDEN)
+    
+    if request.method == 'POST':
+        serializer = AvaliacaoPostSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            Aluno.objects.get(pk=id_aluno)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Aluno não encontrado."}, status=404)
+
+        data = request.data.copy()
+        data['id_professor'] = professor_autenticado.id
+        data['id_aluno'] = id_aluno
+        
+        serializer = AvaliacaoSemIdSerializer(data=data)
+        if serializer.is_valid():
+            avaliacao = serializer.save()
+            response_serializer = AvaliacaoSerializer(avaliacao)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
