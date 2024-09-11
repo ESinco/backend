@@ -10,7 +10,7 @@ from rest_framework import status
 
 from .models import *
 from .serializers import *
-from api_aluno.models import Aluno
+from api_aluno.models import Aluno, Avaliacao
 
 
 @api_view(['POST'])
@@ -103,3 +103,23 @@ def criar_avaliacao(request, id_aluno):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def deletar_avaliacao(request, id_avaliacao):
+    try:
+        professor_autenticado = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas professores podem deletar avaliações."}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        avaliacao = Avaliacao.objects.get(pk=id_avaliacao)
+    except Avaliacao.DoesNotExist:
+        return Response({"detail": "Avaliação não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+    
+    dados = AvaliacaoSerializer(avaliacao).data
+    if dados['id_professor'] != professor_autenticado.id:
+        return Response({"detail": "Você não tem permissão para deletar esta avaliação."}, status=status.HTTP_403_FORBIDDEN)
+        
+    avaliacao.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
