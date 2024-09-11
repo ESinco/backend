@@ -10,5 +10,5 @@ urlpatterns = [
     path('<int:id_professor>/', views.get_by_id_professor, name='get_by_id_professor'),
     path('login/', views.login_professor, name='login_professor'),
     path('avaliar/<str:id_aluno>/', views.criar_avaliacao, name='criar_avaliacao'),
-    path('avaliacao/<int:id_avaliacao>/', views.deletar_avaliacao, name='deletar_avaliacao'),
+    path('retirar_avaliacao/<int:id_avaliacao>/', views.deletar_avaliacao, name='deletar_avaliacao'),
 ]
