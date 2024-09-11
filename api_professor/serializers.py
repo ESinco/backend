@@ -1,8 +1,7 @@
+from django.forms import ValidationError
 from rest_framework import serializers
-
 from .models import Professor
 from api_aluno.models import Avaliacao
-
 from django.contrib.auth.models import User
 
 
@@ -28,15 +27,21 @@ class ProfessorPostSerializer(serializers.ModelSerializer):
         professor = Professor.objects.create(user=usuario, **validated_data)
         return professor
     
-class AvaliacaoSerializer(serializers.ModelSerializer):
+class AvaliacaoSerializer(serializers.ModelSerializer):    
     class Meta:
         model = Avaliacao
         fields = '__all__'
         
-class AvaliacaoSemIdSerializer(serializers.ModelSerializer):
+class AvaliacaoSemIdSerializer(serializers.ModelSerializer):   
     tags = serializers.ListField(
         child=serializers.CharField(max_length=100),
         required=False
+    )
+    
+    comentario = serializers.CharField(
+        max_length=280,
+        min_length=1,
+        required=False,
     )
     
     class Meta:
@@ -49,6 +54,22 @@ class AvaliacaoPostSerializer(serializers.ModelSerializer):
         required=False
     )
     
+    comentario = serializers.CharField(
+        max_length=280,
+        min_length=1,
+        required=False,
+    )
+    
     class Meta:
         model = Avaliacao
         fields = ['comentario', 'tags']
+        
+    def validate(self, data):
+        comentario = data.get('comentario')
+        tags = data.get('tags')
+        
+        if not comentario and not tags:
+            raise ValidationError("Pelo menos um dos campos 'comentario' ou 'tags' deve ser fornecido.")
+        
+        return data
+    

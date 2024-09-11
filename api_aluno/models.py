@@ -52,5 +52,5 @@ class Avaliacao(models.Model):
     id_avaliacao = models.AutoField(primary_key=True)
     id_professor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
     id_aluno = models.ForeignKey(Aluno, null=False, on_delete=models.CASCADE)
-    comentario = models.CharField(max_length=280)
+    comentario = models.CharField(max_length=280, null=True)
     tags = models.ManyToManyField(Feedback, related_name="avaliacoes")
