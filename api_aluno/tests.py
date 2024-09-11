@@ -395,7 +395,7 @@ class InteresseNoProjetoTests(TestCase):
 
         self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor)
 
-        self.url = reverse('interesse_projeto', args=[self.projeto.id_projeto])
+        self.url = reverse('interessar_no_projeto', args=[self.projeto.id_projeto])
         self.client.force_authenticate(user=self.user)  
 
     def test_interesse_no_projeto_sucesso(self):
@@ -407,7 +407,7 @@ class InteresseNoProjetoTests(TestCase):
         self.assertEqual(Associacao.objects.first().projeto, self.projeto)
         
     def test_interesse_no_projeto_projeto_nao_existe(self):
-        url = reverse('interesse_projeto', args=[9999]) 
+        url = reverse('interessar_no_projeto', args=[9999]) 
         response = self.client.post(url, {'projeto_id': 9999}, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -417,7 +417,7 @@ class InteresseNoProjetoTests(TestCase):
     def test_interesse_no_projeto_associacao_ja_existe(self):
         Associacao.objects.create(aluno=self.aluno, projeto=self.projeto)
         
-        url = reverse('interesse_projeto', args=[self.projeto.id_projeto])
+        url = reverse('interessar_no_projeto', args=[self.projeto.id_projeto])
         response = self.client.post(url, {'projeto_id': self.projeto.id_projeto}, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -427,7 +427,7 @@ class InteresseNoProjetoTests(TestCase):
     def test_interesse_no_projeto_aluno_negado(self):
         self.client.force_authenticate(user=self.professor.user)
     
-        url = reverse('interesse_projeto', args=[self.projeto.id_projeto])
+        url = reverse('interessar_no_projeto', args=[self.projeto.id_projeto])
         response = self.client.post(url, {'projeto_id': self.projeto.id_projeto}, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -464,7 +464,7 @@ class DeleteInteressarNoProjetoTests(APITestCase):
 
         self.associacao = Associacao.objects.create(aluno=self.aluno, projeto=self.projeto)
 
-        self.url = reverse('delete_interesse_projeto', args=[self.projeto.id_projeto])
+        self.url = reverse('retirar_interesse_no_projeto', args=[self.projeto.id_projeto])
         self.client.force_authenticate(user=self.user)
 
     def test_delete_interesse_no_projeto_sucesso(self):
@@ -475,7 +475,7 @@ class DeleteInteressarNoProjetoTests(APITestCase):
         self.assertEqual(Associacao.objects.count(), 0)
 
     def test_delete_interesse_no_projeto_projeto_nao_existe(self):
-        url = reverse('delete_interesse_projeto', args=[9999])
+        url = reverse('retirar_interesse_no_projeto', args=[9999])
         response = self.client.delete(url)
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

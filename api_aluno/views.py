@@ -129,7 +129,7 @@ def visualizar_historico(request, matricula):
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def interessarNoProjeto(request, projeto_id):
+def interessar_no_projeto(request, projeto_id):
     try:
         aluno_autenticado = Aluno.objects.get(user=request.user)
     except Aluno.DoesNotExist:
@@ -149,7 +149,7 @@ def interessarNoProjeto(request, projeto_id):
     
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
-def deleteInteressarNoProjeto(request, projeto_id):
+def retirar_interessar_no_projeto(request, projeto_id):
     try:
         aluno_autenticado = Aluno.objects.get(user=request.user)
     except Aluno.DoesNotExist:
