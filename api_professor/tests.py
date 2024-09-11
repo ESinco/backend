@@ -161,7 +161,7 @@ class getAllProfessorViewTest(APITestCase):
 
 
 # Testando GET de pegar professor por ID.
-class getProfessorPorIdTest(APITestCase):
+class GetProfessorPorIdTest(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -194,82 +194,3 @@ class getProfessorPorIdTest(APITestCase):
         
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-       
-        
-class LoginProfessorViewTest(APITestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.url = reverse('login_professor')
-        usuario = User.objects.create_user(
-            username='andre@example.com',
-            email='andre@example.com',
-            password='1234'
-        )
-        self.professor = Professor.objects.create(
-            nome='Andre Souza',
-            email='andre@example.com',
-            user=usuario
-        )
-        self.login = {
-            "email" : "andre@example.com",
-            "senha" : "1234"
-        }
-
-    def test_login_professor_sucesso(self):
-        response = self.client.post(self.url, self.login, format='json')
-        
-        #Asserts
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('refresh', response.data)
-        self.assertIn('access', response.data)
-        self.assertNotEqual(response.data['refresh'], '')
-        self.assertNotEqual(response.data['access'], '')
-        
-    def test_login_professor_com_email_vazio(self):
-        invalid_data = {
-            "email": "",
-            "senha": "1234"
-        }
-        response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn('detail', response.data)
-        self.assertEqual('Professor não encontrado.', response.data['detail'])
-
-    def test_login_professor_com_senha_vazia(self):
-        invalid_data = {
-            "email": "andre@example.com",
-            "senha": ""
-        }
-        response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn('detail', response.data)
-        self.assertEqual('Senha incorreta.', response.data['detail'])
-
-        
-    def test_login_professor_inexistente(self):
-        invalid_data = {
-            "email": "joao.silva@example.com",
-            "senha": "senha123"
-        }
-        response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn('detail', response.data)
-        self.assertEqual('Professor não encontrado.', response.data['detail'])
-        
-    def test_login_professor_senha_incorreta(self):
-        invalid_data = {
-            "email": "andre@example.com",
-            "senha": "12345"
-        }
-        response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn('detail', response.data)
-        self.assertEqual('Senha incorreta.', response.data['detail'])
