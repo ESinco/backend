@@ -12,4 +12,5 @@ urlpatterns = [
     path('historico/importar/', views.upload_historico, name='upload_historico'),
     path('historico/<str:matricula>/', views.visualizar_historico, name='visualizar_historico'),
     path('interesse_projeto/<int:projeto_id>/', views.interessarNoProjeto, name='interesse_projeto'),
+    path('delete_interesse_projeto/<int:projeto_id>/', views.deleteInteressarNoProjeto, name='delete_interesse_projeto'),
 ]
