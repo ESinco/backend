@@ -1,7 +1,21 @@
 from django.db import models
 from django.contrib.auth.models import User
 from api_professor.models import Professor
+from api_rest.models import Habilidade, Experiencia, Interesse, Feedback
 
+
+class Aluno(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
+    matricula = models.CharField(max_length=9, primary_key=True)
+    nome = models.TextField()
+    email = models.TextField(unique=True)
+    curriculo = models.TextField(null=True)
+    github = models.TextField(null=True)
+    linkedin = models.TextField(null=True)
+    cra = models.FloatField(null=True)
+    habilidades = models.ManyToManyField(Habilidade, related_name="alunos")
+    experiencias = models.ManyToManyField(Experiencia, related_name="alunos")
+    interesses = models.ManyToManyField(Interesse, related_name="alunos")
 
 class Disciplina(models.Model):
     historico = models.ForeignKey('HistoricoAcademico', related_name='disciplinas', on_delete=models.CASCADE)
@@ -17,48 +31,6 @@ class Disciplina(models.Model):
 
     def __str__(self):
         return f"{self.nome} - {self.media}"
-    
-
-class Habilidade(models.Model):
-    nome = models.TextField(primary_key=True)
-    grupo = models.TextField()
-
-    def __str__(self):
-        return f'{self.grupo}: {self.nome}'
-    
-class Experiencia(models.Model):
-    nome = models.TextField(primary_key=True)
-    grupo = models.TextField()
-
-    def __str__(self):
-        return f'{self.grupo}: {self.nome}'
-    
-class Interesse(models.Model):
-    nome = models.TextField(primary_key=True)
-    grupo = models.TextField()
-
-    def __str__(self):
-        return f'{self.grupo}: {self.nome}'
-    
-class Feedback(models.Model):
-    nome = models.TextField(primary_key=True)
-    grupo = models.TextField()
-
-    def __str__(self):
-        return f'{self.grupo}: {self.nome}'
-    
-class Aluno(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
-    matricula = models.CharField(max_length=9, primary_key=True)
-    nome = models.TextField()
-    email = models.TextField(unique=True)
-    curriculo = models.TextField(null=True)
-    github = models.TextField(null=True)
-    linkedin = models.TextField(null=True)
-    cra = models.FloatField(null=True)
-    habilidades = models.ManyToManyField(Habilidade, related_name="alunos")
-    experiencias = models.ManyToManyField(Experiencia, related_name="alunos")
-    interesses = models.ManyToManyField(Interesse, related_name="alunos")
 
     def __str__(self):
         return (f'matricula: {self.matricula}\n'
