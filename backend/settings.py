@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'api_aluno',
     'api_professor',
     'api_projeto',
-    'api_rest'
+    'api_rest',
     'pdfplumber',
     'rest_framework_simplejwt',
     'pytz'
@@ -110,7 +110,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ProjetIn-db',
         'USER': 'postgres',
-        'PASSWORD': 'admin',
+        'PASSWORD': 'postgres',
         'HOST': 'localhost',
         'PORT': '5432',
     }
