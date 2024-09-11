@@ -29,19 +29,20 @@ def login(request):
 
     response = {}
     isTeacher = True
-    if Professor.objects.exists(user=usuario):
+    try:
         professor = Professor.objects.get(user=usuario)
         response = ProfessorSerializer(professor).data
-    elif Aluno.objects.exists(user=usuario):
-        isTeacher = False
-        aluno = Aluno.objects.get(user=usuario)
-        response = AlunoLoginSerializer(aluno).data
-    else:
-        return Response({"detail": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
+    except Professor.DoesNotExist:
+        try:
+            aluno = Aluno.objects.get(user=usuario)
+            isTeacher = False
+            response = AlunoLoginSerializer(aluno).data
+        except Aluno.DoesNotExist:
+            return Response({"detail": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
     
     refresh = RefreshToken.for_user(usuario)
+    response['isTeacher'] = isTeacher
     response['refresh'] = str(refresh)
     response['access'] = str(refresh.access_token)
-    response['isTeacher'] = isTeacher
 
     return Response(response)
