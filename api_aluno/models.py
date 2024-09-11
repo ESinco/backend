@@ -17,6 +17,15 @@ class Aluno(models.Model):
     experiencias = models.ManyToManyField(Experiencia, related_name="alunos")
     interesses = models.ManyToManyField(Interesse, related_name="alunos")
 
+    def __str__(self):
+        return (f'matricula: {self.matricula}\n'
+                f'nome: {self.nome}\n'
+                f'email: {self.email}\n'
+                f'curriculo: {self.curriculo}\n'
+                f'github: {self.github}\n'
+                f'linkedin: {self.linkedin}\n'
+                f'cra: {self.cra}')
+        
 class Disciplina(models.Model):
     historico = models.ForeignKey('HistoricoAcademico', related_name='disciplinas', on_delete=models.CASCADE)
     codigo = models.CharField(max_length=20)
@@ -31,15 +40,6 @@ class Disciplina(models.Model):
 
     def __str__(self):
         return f"{self.nome} - {self.media}"
-
-    def __str__(self):
-        return (f'matricula: {self.matricula}\n'
-                f'nome: {self.nome}\n'
-                f'email: {self.email}\n'
-                f'curriculo: {self.curriculo}\n'
-                f'github: {self.github}\n'
-                f'linkedin: {self.linkedin}\n'
-                f'cra: {self.cra}')
         
 class HistoricoAcademico(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
