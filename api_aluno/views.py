@@ -7,8 +7,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-from django.http import FileResponse, Http404
+from django.http import FileResponse
 from django.conf import settings
+from rest_framework.permissions import IsAuthenticated
 import os
 
 from .utils import extrair_disciplinas_do_pdf
@@ -90,22 +91,29 @@ def upload_historico(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     try:
-        historico, created = HistoricoAcademico.objects.get_or_create(aluno=aluno)
+        historico_antigo = HistoricoAcademico.objects.filter(aluno=aluno).first()
+        if historico_antigo:
+            historico_antigo.delete()
 
-        if not created:
-            historico.historico_pdf.delete(save=False)
-        historico.historico_pdf = historico_pdf
-        historico.save()
+        novo_historico = HistoricoAcademico.objects.create(
+            aluno=aluno,
+            historico_pdf=historico_pdf
+        )
 
-        extrair_disciplinas_do_pdf(historico)
+        extrair_disciplinas_do_pdf(novo_historico)
         return Response(status=status.HTTP_200_OK)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def visualizar_historico(request, matricula):
     try:
         aluno = Aluno.objects.get(pk=matricula)
+
+        if request.user != aluno.user and not hasattr(request.user, 'professor'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         try:
             historico = HistoricoAcademico.objects.get(aluno=aluno)
             if not historico.historico_pdf:
@@ -116,7 +124,7 @@ def visualizar_historico(request, matricula):
             try:
                 with open(pdf_path, 'rb') as pdf_file:
                     response = FileResponse(pdf_file, content_type='application/pdf')
-                    response['Content-Disposition'] = f'attachment; filename="{historico.historico_pdf.name}"'
+                    response['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
                     return response
             except FileNotFoundError:
                 return Response(status=status.HTTP_404_NOT_FOUND)
