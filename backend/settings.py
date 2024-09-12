@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'api_aluno',
     'api_professor',
     'api_projeto',
+    'api_rest',
     'pdfplumber',
     'rest_framework_simplejwt',
     'pytz'
