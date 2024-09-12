@@ -121,9 +121,9 @@ class CriarProjetoViewTest(APITestCase):
         self.assertIn("code", response.data)
         self.assertIn("messages", response.data)
         self.assertEqual("token_not_valid", response.data["code"])
-        self.assertEqual("O token é inválido ou expirado", response.data["messages"]["message"])
+        self.assertEqual("O token é inválido ou expirado", response.data["messages"][0]["message"])
     
-    def test_criar_projeto_token_invalido(self):
+    def test_criar_projeto_token_tipo_invalido(self):
         usuario = User.objects.create_user(
             username='fabio1@example.com',
             email='fabio1@example.com',

@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from api_professor.views import *
 from api_professor.models import Professor
+from api_aluno.models import Feedback
 
 
 #Models
@@ -194,3 +195,246 @@ class GetProfessorPorIdTest(APITestCase):
         
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+       
+class CriarAvaliacaoViewTest(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario_professor = User.objects.create_user(
+            username='fabio@example.com',
+            email='fabio@example.com',
+            password='1234'
+        )
+        self.professor = Professor.objects.create(nome="Fabio", email="fabio@example.com", user=self.usuario_professor)
+        self.login = {
+            "email" : "andre@example.com",
+            "senha" : "1234"
+        }
+        self.usuario_aluno = User.objects.create_user(
+            username='andre@example.com',
+            email='andre@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula='121210210',
+            nome='Andre Souza',
+            email='andre@example.com',
+            user=self.usuario_aluno
+        )
+
+        self.tag_criativo = Feedback.objects.create(nome="Criativo", grupo="Feedbacks")
+        self.tag_proativo = Feedback.objects.create(nome="Proativo", grupo="Feedbacks")
+        
+        self.avaliacao_data = {
+            "comentario" : "Bom demais",
+            "tags" : ["Criativo", "Proativo"]
+        }
+        
+        
+        self.url = reverse('criar_avaliacao', kwargs={'id_aluno': self.aluno.matricula})
+        refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+    
+    def test_criar_avaliacao_sucesso(self):
+        response = self.client.post(self.url, self.avaliacao_data, format='json')
+        
+        # Asserts
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(self.professor.id, response.data['id_professor'])
+        self.assertEqual(self.aluno.matricula, response.data['id_aluno'])
+        self.assertEqual(self.avaliacao_data['comentario'], response.data['comentario'])
+        self.assertEqual(self.avaliacao_data['tags'][0], response.data['tags'][0])
+        self.assertEqual(self.avaliacao_data['tags'][1], response.data['tags'][1])
+
+    def test_criar_avaliacao_comentario_nulo(self):
+        invalid_data = self.avaliacao_data.copy()
+        invalid_data['comentario'] = None
+        response = self.client.post(self.url, invalid_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertEqual("Este campo não pode ser nulo.", str(response.data['comentario'][0]))
+
+    def test_criar_avaliacao_comentario_e_tag_vazio(self):
+        invalid_data = self.avaliacao_data.copy()
+        invalid_data['comentario'] = ""
+        invalid_data['tags'] = []
+        response = self.client.post(self.url, invalid_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertEqual("Pelo menos um dos campos 'comentario' ou 'tags' deve ser fornecido.", str(response.data['non_field_errors'][0]))
+  
+    def test_criar_avaliacao_comentario_vazio(self):
+        valid_data = self.avaliacao_data.copy()
+        valid_data['comentario'] = ""
+        response = self.client.post(self.url, valid_data, format='json')
+        #Asserts
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(self.professor.id, response.data['id_professor'])
+        self.assertEqual(self.aluno.matricula, response.data['id_aluno'])
+        self.assertEqual(valid_data['comentario'], response.data['comentario'])
+        self.assertEqual(valid_data['tags'][0], response.data['tags'][0])
+        self.assertEqual(valid_data['tags'][1], response.data['tags'][1])
+             
+    def test_criar_avaliacao_tags_vazia(self):
+        valid_data = self.avaliacao_data.copy()
+        valid_data['tags'] = []
+        response = self.client.post(self.url, valid_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(self.professor.id, response.data['id_professor'])
+        self.assertEqual(self.aluno.matricula, response.data['id_aluno'])
+        self.assertEqual(valid_data['comentario'], response.data['comentario'])
+        self.assertEqual(valid_data['tags'], response.data['tags'])
+        
+    def test_criar_avaliacao_token_invalido(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer TOKEN_INVALIDO')
+        response = self.client.post(self.url, self.avaliacao_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertIn("code", response.data)
+        self.assertIn("messages", response.data)
+        self.assertEqual("token_not_valid", response.data["code"])
+        self.assertEqual("O token é inválido ou expirado", response.data["messages"][0]["message"])
+    
+    def test_criar_avaliacao_token_tipo_invalido(self):
+        refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer ${refresh}')
+        response = self.client.post(self.url, self.avaliacao_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertIn("code", response.data)
+        self.assertIn("messages", response.data)
+        self.assertEqual("token_not_valid", response.data["code"])
+        self.assertEqual("O token é inválido ou expirado", str(response.data["messages"][0]["message"]))
+        
+    def test_criar_avaliacao_token_aluno(self):
+        refresh = RefreshToken.for_user(self.usuario_aluno)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        response = self.client.post(self.url, self.avaliacao_data, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertEqual("Acesso negado. Apenas professores podem criar avaliações.", response.data["detail"])
+
+class DeletarAvaliacaoViewTest(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario_professor = User.objects.create_user(
+            username='fabio@example.com',
+            email='fabio@example.com',
+            password='1234'
+        )
+        self.professor = Professor.objects.create(
+            nome="Fabio", 
+            email="fabio@example.com",
+            user=self.usuario_professor)
+        self.login = {
+            "email" : "andre@example.com",
+            "senha" : "1234"
+        }
+        self.usuario_aluno = User.objects.create_user(
+            username='andre@example.com',
+            email='andre@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula='121210210',
+            nome='Andre Souza',
+            email='andre@example.com',
+            user=self.usuario_aluno
+        )
+
+        self.tag_criativo = Feedback.objects.create(nome="Criativo", grupo="Feedbacks")
+        self.tag_proativo = Feedback.objects.create(nome="Proativo", grupo="Feedbacks")
+        
+        self.avaliacao = Avaliacao.objects.create(
+            id_professor=self.professor,
+            id_aluno=self.aluno,
+            comentario="Bom demais",
+        )
+        self.avaliacao.tags.set([self.tag_criativo, self.tag_proativo])
+        
+        
+        self.usuario_professor_2 = User.objects.create_user(
+            username='fabio1@example.com',
+            email='fabio1@example.com',
+            password='1234'
+        )
+        self.professor_2 = Professor.objects.create(
+            nome="Fabio", 
+            email="fabio1@example.com",
+            user=self.usuario_professor_2)
+        self.avaliacao_2 = Avaliacao.objects.create(
+            id_professor=self.professor_2,
+            id_aluno=self.aluno,
+            comentario="Bom demais",
+        )
+        self.avaliacao_2.tags.set([self.tag_criativo, self.tag_proativo])
+        
+        self.url = reverse('deletar_avaliacao', kwargs={'id_avaliacao': self.avaliacao.id_avaliacao})
+        refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+    
+    def test_deletar_avaliacao_sucesso(self):
+        response = self.client.delete(self.url, format='json')
+        
+        # Asserts
+        self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
+
+    def test_deletar_avaliacao_de_outro_professor(self):
+        self.url = reverse('deletar_avaliacao', kwargs={'id_avaliacao': self.avaliacao_2.id_avaliacao})
+        response = self.client.delete(self.url, format='json')
+        
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertEqual("Você não tem permissão para deletar esta avaliação.", response.data["detail"])
+         
+    def test_deletar_avaliacao_inexistente(self):
+        self.url = reverse('deletar_avaliacao', kwargs={'id_avaliacao': '00'})
+        response = self.client.delete(self.url, format='json')
+        
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertEqual("Avaliação não encontrada.", response.data['detail'])
+           
+    def test_deletar_avaliacao_token_invalido(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer TOKEN_INVALIDO')
+        response = self.client.delete(self.url, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertIn("code", response.data)
+        self.assertIn("messages", response.data)
+        self.assertEqual("token_not_valid", response.data["code"])
+        self.assertEqual("O token é inválido ou expirado", response.data["messages"][0]["message"])
+    
+    def test_deletar_avaliacao_token_tipo_invalido(self):
+        refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer ${refresh}')
+        response = self.client.delete(self.url, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertIn("code", response.data)
+        self.assertIn("messages", response.data)
+        self.assertEqual("token_not_valid", response.data["code"])
+        self.assertEqual("O token é inválido ou expirado", str(response.data["messages"][0]["message"]))
+        
+    def test_deletar_avaliacao_token_aluno(self):
+        refresh = RefreshToken.for_user(self.usuario_aluno)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        response = self.client.delete(self.url, format='json')
+        
+        #Asserts
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertIn("detail", response.data)
+        self.assertEqual("Acesso negado. Apenas o dono da avaliação pode deletá-la.", response.data["detail"])

@@ -10,5 +10,5 @@ urlpatterns = [
     path('professor/', include('api_professor.urls'), name='api_professor_urls'),
     path('aluno/', include('api_aluno.urls'), name='api_aluno_urls'),
     path('projeto/', include('api_projeto.urls'), name='api_projeto_urls'),
-    path('', include('api_rest.urls'), name='api_rest_urls')
+    path('api/', include('api_rest.urls'), name='api_rest_urls')
 ]
