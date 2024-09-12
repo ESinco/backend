@@ -1,18 +1,16 @@
 from django.test import TestCase
-from rest_framework.test import APITestCase, APIClient
-from rest_framework import status
 from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase, APIClient
 
-from api_professor.views import *
 from api_professor.models import Professor
+from django.contrib.auth.models import User
 
 
-#Models
-# Testando model de professor.
+# Models
 class ProfessorModelTest(TestCase):
-
     def setUp(self):
-        usuario = User.objects.create_user(
+        self.usuario = User.objects.create_user(
             username='andre@example.com',
             email='andre@example.com',
             password='1234'
@@ -20,11 +18,10 @@ class ProfessorModelTest(TestCase):
         self.professor = Professor.objects.create(
             nome='Andre Souza',
             email='andre@example.com',
-            user = usuario
+            user=self.usuario
         )
 
     def test_professor_creation(self):
-        #Asserts
         self.assertIsInstance(self.professor, Professor)
         self.assertEqual(self.professor.nome, 'Andre Souza')
         self.assertEqual(self.professor.email, 'andre@example.com')
@@ -33,14 +30,11 @@ class ProfessorModelTest(TestCase):
         self.assertTrue(self.professor.user.check_password('1234'))
 
     def test_professor_str(self):
-        expected_str = ('nome: Andre Souza\n'
-                        'email: andre@example.com')
-        
-        #Asserts
+        expected_str = 'nome: Andre Souza\nemail: andre@example.com'
         self.assertEqual(str(self.professor), expected_str)
 
-#Views
-# Testando POST de professores
+
+# Views
 class CriarProfessorViewTest(APITestCase):
     def setUp(self):
         self.client = APIClient()
@@ -53,8 +47,6 @@ class CriarProfessorViewTest(APITestCase):
 
     def test_criar_professor_sucesso(self):
         response = self.client.post(self.url, self.professor_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['nome'], self.professor_data['nome'])
         self.assertEqual(response.data['email'], self.professor_data['email'])
@@ -66,11 +58,8 @@ class CriarProfessorViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('nome', response.data)
-
 
     def test_criar_professor_com_email_vazio(self):
         invalid_data = {
@@ -79,8 +68,6 @@ class CriarProfessorViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
 
@@ -92,98 +79,74 @@ class CriarProfessorViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_criar_professor_senha_vazia(self):
-        invalid_data= {
+        invalid_data = {
             "nome": "Gabriel Souza",
             "email": "gabriel.souza@email.com",
             "senha": ''
         }
-        response= self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
-        self.assertEqual(response.status_code,status.HTTP_400_BAD_REQUEST)
+        response = self.client.post(self.url, invalid_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('senha', response.data)
 
     def test_criar_professor_vazio(self):
-        invalid_data= {
+        invalid_data = {
             "nome": "",
             "email": '',
             "senha": ''
         }
-        response= self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
-        self.assertEqual(response.status_code,status.HTTP_400_BAD_REQUEST)
+        response = self.client.post(self.url, invalid_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-# Testando GET de todos os professores.
-class getAllProfessorViewTest(APITestCase):
-    
+
+class GetAllProfessorViewTest(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('get_all_professores')
-        
-        usuario = User.objects.create_user(username='andrey@example.com', 
-                                           email='andrey@example.com',
-                                           password='213')
-        Professor.objects.create(nome="Andrey", email="andrey@example.com", user = usuario)
-        usuario = User.objects.create_user(username='fabio@example.com', 
-                                           email='fabio@example.com',
-                                           password='123')
-        Professor.objects.create(nome="Fabio", email="fabio@example.com", user = usuario)
-        usuario = User.objects.create_user(username='wilkerson@example.com', 
-                                           email='wilkerson@example.com',
-                                           password='321')        
-        Professor.objects.create(nome="Wilkerson", email="wilkerson@example.com", user = usuario)
-    
+
+        usuarios = [
+            {"username": 'andrey@example.com', "email": 'andrey@example.com', "password": '213'},
+            {"username": 'fabio@example.com', "email": 'fabio@example.com', "password": '123'},
+            {"username": 'wilkerson@example.com', "email": 'wilkerson@example.com', "password": '321'}
+        ]
+        for dados_usuario in usuarios:
+            user = User.objects.create_user(**dados_usuario)
+            Professor.objects.create(nome=dados_usuario['username'].split('@')[0].title(), email=dados_usuario['email'], user=user)
+
     def test_get_all_professores_sucesso(self):
         response = self.client.get(self.url, format='json')
         nomes_professores = [prof['nome'] for prof in response.data]
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 3)
         self.assertIn("Andrey", nomes_professores)
         self.assertIn("Fabio", nomes_professores)
         self.assertIn("Wilkerson", nomes_professores)
-        
+
     def test_get_all_professores_vazio(self):
         Professor.objects.all().delete()
-        
         response = self.client.get(self.url, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
 
-# Testando GET de pegar professor por ID.
-class getProfessorPorIdTest(APITestCase):
-
+class GetProfessorPorIdTest(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        
-        usuario = User.objects.create_user(username='andrey@example.com', 
-                                           email='andrey@example.com',
-                                           password='213')
-        self.professor1 = Professor.objects.create(nome="Andrey", email="andrey@example.com", user = usuario)
-        usuario = User.objects.create_user(username='fabio@example.com', 
-                                           email='fabio@example.com',
-                                           password='123')
-        self.professor2 = Professor.objects.create(nome="Fabio", email="fabio@example.com", user = usuario)
-        usuario = User.objects.create_user(username='wilkerson@example.com', 
-                                           email='wilkerson@example.com',
-                                           password='321')        
-        self.professor3 = Professor.objects.create(nome="Wilkerson", email="wilkerson@example.com", user = usuario)
+
+        user1 = User.objects.create_user(username='andrey@example.com', email='andrey@example.com', password='213')
+        self.professor1 = Professor.objects.create(nome="Andrey", email="andrey@example.com", user=user1)
+
+        user2 = User.objects.create_user(username='fabio@example.com', email='fabio@example.com', password='123')
+        self.professor2 = Professor.objects.create(nome="Fabio", email="fabio@example.com", user=user2)
+
+        user3 = User.objects.create_user(username='wilkerson@example.com', email='wilkerson@example.com', password='321')
+        self.professor3 = Professor.objects.create(nome="Wilkerson", email="wilkerson@example.com", user=user3)
 
     def test_get_professor_by_id_sucesso(self):
         url = reverse('get_by_id_professor', kwargs={'id_professor': self.professor1.id})
         response = self.client.get(url)
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['nome'], self.professor1.nome)
         self.assertEqual(response.data['email'], self.professor1.email)
@@ -191,16 +154,14 @@ class getProfessorPorIdTest(APITestCase):
     def test_get_professor_by_id_inexistente(self):
         url = reverse('get_by_id_professor', kwargs={'id_professor': 999})
         response = self.client.get(url)
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-       
-        
+
+
 class LoginProfessorViewTest(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('login_professor')
-        usuario = User.objects.create_user(
+        self.usuario = User.objects.create_user(
             username='andre@example.com',
             email='andre@example.com',
             password='1234'
@@ -208,34 +169,30 @@ class LoginProfessorViewTest(APITestCase):
         self.professor = Professor.objects.create(
             nome='Andre Souza',
             email='andre@example.com',
-            user=usuario
+            user=self.usuario
         )
-        self.login = {
-            "email" : "andre@example.com",
-            "senha" : "1234"
+        self.login_data = {
+            "email": "andre@example.com",
+            "senha": "1234"
         }
 
     def test_login_professor_sucesso(self):
-        response = self.client.post(self.url, self.login, format='json')
-        
-        #Asserts
+        response = self.client.post(self.url, self.login_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('refresh', response.data)
         self.assertIn('access', response.data)
         self.assertNotEqual(response.data['refresh'], '')
         self.assertNotEqual(response.data['access'], '')
-        
+
     def test_login_professor_com_email_vazio(self):
         invalid_data = {
             "email": "",
             "senha": "1234"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('detail', response.data)
-        self.assertEqual('Professor não encontrado.', response.data['detail'])
+        self.assertEqual(response.data['detail'], 'Professor não encontrado.')
 
     def test_login_professor_com_senha_vazia(self):
         invalid_data = {
@@ -243,33 +200,26 @@ class LoginProfessorViewTest(APITestCase):
             "senha": ""
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
-        self.assertEqual('Senha incorreta.', response.data['detail'])
+        self.assertEqual(response.data['detail'], 'Senha incorreta.')
 
-        
     def test_login_professor_inexistente(self):
         invalid_data = {
             "email": "joao.silva@example.com",
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('detail', response.data)
-        self.assertEqual('Professor não encontrado.', response.data['detail'])
-        
+        self.assertEqual(response.data['detail'], 'Professor não encontrado.')
+
     def test_login_professor_senha_incorreta(self):
         invalid_data = {
             "email": "andre@example.com",
             "senha": "12345"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
-        self.assertEqual('Senha incorreta.', response.data['detail'])
+        self.assertEqual(response.data['detail'], 'Senha incorreta.')
