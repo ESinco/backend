@@ -40,8 +40,9 @@ class AvaliacaoSemIdSerializer(serializers.ModelSerializer):
     
     comentario = serializers.CharField(
         max_length=280,
-        min_length=1,
+        min_length=0,
         required=False,
+        allow_blank=True
     )
     
     class Meta:
@@ -56,8 +57,9 @@ class AvaliacaoPostSerializer(serializers.ModelSerializer):
     
     comentario = serializers.CharField(
         max_length=280,
-        min_length=1,
+        min_length=0,
         required=False,
+        allow_blank=True
     )
     
     class Meta:
