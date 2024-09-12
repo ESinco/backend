@@ -110,7 +110,7 @@ def deletar_avaliacao(request, id_avaliacao):
     try:
         professor_autenticado = Professor.objects.get(user=request.user)
     except Professor.DoesNotExist:
-        return Response({"detail": "Acesso negado. Apenas professores podem deletar avaliações."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"detail": "Acesso negado. Apenas o dono da avaliação pode deletá-la."}, status=status.HTTP_403_FORBIDDEN)
     
     try:
         avaliacao = Avaliacao.objects.get(pk=id_avaliacao)
