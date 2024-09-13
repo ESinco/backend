@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'api_rest',
     'backend',
     'api_aluno',
     'api_professor',
@@ -113,7 +112,7 @@ DATABASES = {
         'NAME': 'ProjetIn-db',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': '172.18.0.1',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }
