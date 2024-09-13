@@ -9,7 +9,6 @@ from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
 from api_professor.models import Professor
 from api_projeto.models import Projeto
 
-
 import os
 
 
@@ -499,3 +498,103 @@ class DeleteInteressarNoProjetoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'Acesso negado. Apenas alunos podem se associar a projetos.')
         self.assertEqual(Associacao.objects.count(), 1)
+
+class AlunoUpdateTests(APITestCase):
+    def setUp(self):
+        self.usuario = User.objects.create_user(
+            username='joao.silva@example.com',
+            email='joao.silva@example.com',
+            password='senhaSegura'
+        )  
+        self.aluno = Aluno.objects.create(
+            matricula="123456789",
+            nome="João da Silva",
+            email="joao.silva@example.com",
+            curriculo="Link do curriculo",
+            github="https://github.com/joaosilva",
+            linkedin="https://linkedin.com/in/joaosilva",
+            cra=9.3,
+            user=self.usuario
+        )
+        self.url_editar = reverse('editar_perfil_aluno', args=[self.aluno.matricula])
+        self.client.force_authenticate(user=self.usuario)
+
+    def test_editar_aluno_total(self):
+        nome_antigo = self.aluno.nome
+        email_antigo = self.aluno.email
+        curriculo_antigo = self.aluno.curriculo
+        github_antigo = self.aluno.github
+        linkedin_antigo = self.aluno.linkedin
+        cra_antigo = self.aluno.cra
+
+        data = {
+            'nome': 'Novo Nome', 
+            'curriculo': 'Novo Currículo', 
+            'email': 'newtestuser@example.com',
+            'github': 'https://github.com/new', 
+            'linkedin': 'https://linkedin.com/in/new', 
+            'cra': 10}
+
+        response = self.client.put(self.url_editar, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.aluno.refresh_from_db()
+
+        self.assertNotEqual(self.aluno.nome, nome_antigo)
+        self.assertNotEqual(self.aluno.email, email_antigo)
+        self.assertNotEqual(self.aluno.curriculo, curriculo_antigo)
+        self.assertNotEqual(self.aluno.github, github_antigo)
+        self.assertNotEqual(self.aluno.linkedin, linkedin_antigo)
+        self.assertNotEqual(self.aluno.cra, cra_antigo)
+
+        self.assertEqual(self.aluno.nome, 'Novo Nome')
+        self.assertEqual(self.aluno.email, 'newtestuser@example.com')
+        self.assertEqual(self.aluno.curriculo, 'Novo Currículo')
+        self.assertEqual(self.aluno.github, 'https://github.com/new')
+        self.assertEqual(self.aluno.linkedin, 'https://linkedin.com/in/new')
+        self.assertEqual(self.aluno.cra, 10)
+    
+    def test_editar_aluno_parcial(self):
+        nome_antigo = self.aluno.nome
+        email_antigo = self.aluno.email
+        curriculo_antigo = self.aluno.curriculo
+        github_antigo = self.aluno.github
+        linkedin_antigo = self.aluno.linkedin
+        cra_antigo = self.aluno.cra
+
+        data = {
+            'curriculo': 'Novo Currículo', 
+            'github': 'https://github.com/new', 
+            'linkedin': 'https://linkedin.com/in/new', 
+        }
+
+        response = self.client.put(self.url_editar, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.aluno.refresh_from_db()
+
+        self.assertEqual(self.aluno.nome, nome_antigo)
+        self.assertEqual(self.aluno.email, email_antigo)
+        self.assertNotEqual(self.aluno.curriculo, curriculo_antigo)
+        self.assertNotEqual(self.aluno.github, github_antigo)
+        self.assertNotEqual(self.aluno.linkedin, linkedin_antigo)
+        self.assertEqual(self.aluno.cra, cra_antigo)
+
+        self.assertEqual(self.aluno.nome, 'João da Silva')
+        self.assertEqual(self.aluno.email, 'joao.silva@example.com')
+        self.assertEqual(self.aluno.curriculo, 'Novo Currículo')
+        self.assertEqual(self.aluno.github, 'https://github.com/new')
+        self.assertEqual(self.aluno.linkedin, 'https://linkedin.com/in/new')
+        self.assertEqual(self.aluno.cra, 9.3)
+
+    def test_editar_aluno_nao_existe(self):
+        url = reverse('editar_perfil_aluno', kwargs={'matricula': '999999999'})
+
+        data = {
+            'curriculo': 'Novo Currículo', 
+            'github': 'https://github.com/new', 
+            'linkedin': 'https://linkedin.com/in/new', 
+        }
+
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
