@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Aluno, Disciplina, HistoricoAcademico
+from .models import Aluno, Disciplina_Matriculada, Historico_Academico
 
 from django.contrib.auth.models import User
 
@@ -33,14 +33,14 @@ class AlunoLoginSerializer(serializers.ModelSerializer):
         model = Aluno
         fields = ['matricula', 'nome', 'email']
 
-class DisciplinaSerializer(serializers.ModelSerializer):
+class DisciplinaMatriculadaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Disciplina
+        model = Disciplina_Matriculada
         fields = '__all__'
 
 class HistoricoAcademicoSerializer(serializers.ModelSerializer):
-    disciplinas = DisciplinaSerializer(many=True, read_only=True)
+    disciplinas = DisciplinaMatriculadaSerializer(many=True, read_only=True)
 
     class Meta:
-        model = HistoricoAcademico
-        fields = ['id', 'aluno', 'historico_pdf', 'cra', 'disciplinas']
+        model = Historico_Academico
+        fields = ['id', 'aluno', 'historico_pdf', 'cra', 'disciplinas_matriculadas']

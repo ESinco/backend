@@ -28,14 +28,10 @@ class Aluno(models.Model):
                 f'linkedin: {self.linkedin}\n'
                 f'cra: {self.cra}')
         
-class Disciplina(models.Model):
-    historico = models.ForeignKey('HistoricoAcademico', related_name='disciplinas', on_delete=models.CASCADE)
+class Disciplina_Matriculada(models.Model):
+    historico = models.ForeignKey('Historico_Academico', related_name='disciplinas_matriculadas', on_delete=models.CASCADE)
     codigo = models.CharField(max_length=20)
-    nome = models.CharField(max_length=100)
-    professor = models.CharField(max_length=300)
     tipo = models.CharField(max_length=50)
-    creditos = models.IntegerField()
-    carga_horaria = models.IntegerField()
     media = models.FloatField(null=True, blank=True)
     situacao = models.CharField(max_length=50)
     periodo = models.CharField(max_length=10)
@@ -43,7 +39,7 @@ class Disciplina(models.Model):
     def __str__(self):
         return f"{self.nome} - {self.media}"
         
-class HistoricoAcademico(models.Model):
+class Historico_Academico(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, related_name='historicos')
     historico_pdf = models.FileField(upload_to='historicos/')
     cra = models.FloatField(null=True, blank=True)
