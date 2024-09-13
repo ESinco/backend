@@ -4,7 +4,7 @@ import os
 
 from api_professor.models import Professor
 from api_rest.models import Habilidade, Experiencia, Interesse, Feedback
-x
+
 
 class Aluno(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
