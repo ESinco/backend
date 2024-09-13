@@ -63,7 +63,7 @@ class LoginTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('detail', response.data)
-        self.assertEqual('Professor não encontrado.', response.data['detail'])
+        self.assertEqual('Email e senha são obrigatórios.', response.data['detail'])
 
     def test_login_com_senha_vazia(self):
         invalid_data = {
@@ -75,7 +75,7 @@ class LoginTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('detail', response.data)
-        self.assertEqual('Senha incorreta.', response.data['detail'])
+        self.assertEqual('Email e senha são obrigatórios.', response.data['detail'])
 
         
     def test_login_inexistente(self):
