@@ -15,6 +15,7 @@ import os
 from .utils import extrair_disciplinas_do_pdf
 from .models import *
 from .serializers import *
+from api_projeto.models import Projeto, Associacao
 
 
 @api_view(['POST'])
@@ -50,32 +51,6 @@ def get_by_matricula_aluno(request, matricula):
         serializer = AlunoSerializer(aluno)
         return Response(serializer.data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-@api_view(['POST'])
-def login_aluno(request):
-    email = request.data.get('email')
-    senha = request.data.get('senha')
-
-    try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({"detail": "Aluno não encontrado."}, status=404)
-
-    try:
-        aluno = Aluno.objects.get(user=user)
-    except Aluno.DoesNotExist:
-        return Response({"detail": "Aluno não encontrado."}, status=404)
-    
-    if not user.check_password(senha):
-        return Response({"detail": "Senha incorreta."}, status=401)
-
-    refresh = RefreshToken.for_user(user)
-
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    })
-
 
 @api_view(['POST'])
 def upload_historico(request):
@@ -136,3 +111,43 @@ def visualizar_historico(request, matricula):
         return Response(status=status.HTTP_404_NOT_FOUND)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def interessar_no_projeto(request, projeto_id):
+    try:
+        aluno_autenticado = Aluno.objects.get(user=request.user)
+    except Aluno.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas alunos podem se associar a projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        Projeto.objects.get(id_projeto=projeto_id)
+    except Projeto.DoesNotExist:
+        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    associacao, criado = Associacao.objects.get_or_create(aluno_id=aluno_autenticado.matricula, projeto_id=projeto_id)
+
+    if criado:
+        return Response({"detail": "Associação criada com sucesso."}, status=status.HTTP_201_CREATED)
+    else:
+        return Response({"detail": "Aluno já está associado a este projeto."}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def retirar_interessar_no_projeto(request, projeto_id):
+    try:
+        aluno_autenticado = Aluno.objects.get(user=request.user)
+    except Aluno.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas alunos podem se associar a projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        Projeto.objects.get(id_projeto=projeto_id)
+    except Projeto.DoesNotExist:
+        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        associacao = Associacao.objects.get(aluno_id=aluno_autenticado.matricula, projeto_id=projeto_id)
+        associacao.delete()
+        return Response({"detail": "Associação deletada com sucesso."}, status=status.HTTP_200_OK)
+    except:
+        return Response({"detail": "Aluno não está associado a este projeto."}, status=status.HTTP_400_BAD_REQUEST)

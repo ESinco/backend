@@ -10,6 +10,7 @@ from rest_framework import status
 
 from .models import *
 from .serializers import *
+from api_aluno.models import Aluno, Avaliacao
 
 
 @api_view(['POST'])
@@ -47,26 +48,53 @@ def get_by_id_professor(request, id_professor):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['POST'])
-def login_professor(request):
-    email = request.data.get('email')
-    senha = request.data.get('senha')
-
+@permission_classes([IsAuthenticated])
+def criar_avaliacao(request, id_aluno):
     try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({"detail": "Professor não encontrado."}, status=404)
-
-    try:
-        professor = Professor.objects.get(user=user)
+        professor_autenticado = Professor.objects.get(user=request.user)
     except Professor.DoesNotExist:
-        return Response({"detail": "Professor não encontrado."}, status=404)
+        return Response({"detail": "Acesso negado. Apenas professores podem criar avaliações."}, status=status.HTTP_403_FORBIDDEN)
+    
+    if request.method == 'POST':
+        serializer = AvaliacaoPostSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            Aluno.objects.get(pk=id_aluno)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Aluno não encontrado."}, status=404)
 
-    if not user.check_password(senha):
-        return Response({"detail": "Senha incorreta."}, status=401)
+        data = request.data.copy()
+        data['id_professor'] = professor_autenticado.id
+        data['id_aluno'] = id_aluno
+        
+        serializer = AvaliacaoSemIdSerializer(data=data)
+        if serializer.is_valid():
+            avaliacao = serializer.save()
+            response_serializer = AvaliacaoSerializer(avaliacao)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    refresh = RefreshToken.for_user(user)
-
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    })
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def deletar_avaliacao(request, id_avaliacao):
+    try:
+        professor_autenticado = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas o dono da avaliação pode deletá-la."}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        avaliacao = Avaliacao.objects.get(pk=id_avaliacao)
+    except Avaliacao.DoesNotExist:
+        return Response({"detail": "Avaliação não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+    
+    dados = AvaliacaoSerializer(avaliacao).data
+    if dados['id_professor'] != professor_autenticado.id:
+        return Response({"detail": "Você não tem permissão para deletar esta avaliação."}, status=status.HTTP_403_FORBIDDEN)
+        
+    avaliacao.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
