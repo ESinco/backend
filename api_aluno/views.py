@@ -27,6 +27,20 @@ def criar_aluno(request):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def editar_perfil_aluno(request, matricula):
+    try:
+        aluno = Aluno.objects.get(pk=matricula)
+    except Aluno.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = AlunoPutSerializer(aluno, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['GET'])
 def get_all_alunos(request):
     if request.method == 'GET':
@@ -71,7 +85,6 @@ def login_aluno(request):
     response['refresh'] = str(refresh)
     response['access'] = str(refresh.access_token)
     return Response(response)
-
 
 @api_view(['POST'])
 def upload_historico(request):
