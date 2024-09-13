@@ -2,11 +2,12 @@ import pdfplumber
 from .models import Disciplina
 
 
-def extrair_disciplinas_do_pdf(historico_academico, historico_pdf):
+def extrair_disciplinas_do_pdf(historico_academico):
+    pdf_path = historico_academico.historico_pdf.path
     total_creditos = 0
     soma_pontuada = 0
 
-    with pdfplumber.open(historico_pdf) as pdf:
+    with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             # Extrai as linhas de texto da página
             lines = page.extract_text().splitlines()
@@ -17,7 +18,7 @@ def extrair_disciplinas_do_pdf(historico_academico, historico_pdf):
                 line = lines[i].strip()
 
                 # Verifica se a linha contém a palavra "Aprovado" ou "Em Curso"
-                if "Aprovado" in line or "Em Curso" in line:
+                if "Aprovado" in line or "Em Curso" in line or "Dispensa" in line:
                     partes = line.split()
                     if len(partes) < 8:
                         i += 1

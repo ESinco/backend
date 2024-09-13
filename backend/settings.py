@@ -166,3 +166,6 @@ CORS_ORIGIN_ALLOW_ALL = True
 #CORS_ALLOWED_ORIGINS = [
 #    'http://localhost:8000',
 #]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

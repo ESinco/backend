@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 
 from . import views
 
@@ -13,4 +15,4 @@ urlpatterns = [
     path('historico/<str:matricula>/', views.visualizar_historico, name='visualizar_historico'),
     path('interesse_projeto/<int:projeto_id>/', views.interessar_no_projeto, name='interessar_no_projeto'),
     path('retirar_interesse_projeto/<int:projeto_id>/', views.retirar_interessar_no_projeto, name='retirar_interesse_no_projeto'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

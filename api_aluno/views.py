@@ -7,6 +7,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
+from django.http import FileResponse
+from django.conf import settings
+from rest_framework.permissions import IsAuthenticated
+import os
 
 from .utils import extrair_disciplinas_do_pdf
 from .models import *
@@ -53,7 +57,7 @@ def upload_historico(request):
     aluno_id = request.data.get('aluno')
     historico_pdf = request.FILES.get('historico_pdf')
 
-    if not aluno_id or not historico_pdf:
+    if not aluno_id or not historico_pdf or not historico_pdf.size:
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     try:
@@ -62,46 +66,52 @@ def upload_historico(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     try:
-        historico = HistoricoAcademico.objects.create(aluno=aluno)
-        extrair_disciplinas_do_pdf(historico, historico_pdf)
+        historico_antigo = HistoricoAcademico.objects.filter(aluno=aluno).first()
+        if historico_antigo:
+            historico_antigo.delete()
+
+        novo_historico = HistoricoAcademico.objects.create(
+            aluno=aluno,
+            historico_pdf=historico_pdf
+        )
+
+        extrair_disciplinas_do_pdf(novo_historico)
         return Response(status=status.HTTP_200_OK)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def visualizar_historico(request, matricula):
     try:
         aluno = Aluno.objects.get(pk=matricula)
-        historico = aluno.historicoacademico_set.first()
-        if not historico:
+
+        if request.user != aluno.user and not hasattr(request.user, 'professor'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            historico = HistoricoAcademico.objects.get(aluno=aluno)
+            if not historico.historico_pdf:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
+            pdf_path = historico.historico_pdf.path
+
+            try:
+                with open(pdf_path, 'rb') as pdf_file:
+                    response = FileResponse(pdf_file, content_type='application/pdf')
+                    response['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
+                    return response
+            except FileNotFoundError:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+                
+        except HistoricoAcademico.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        disciplinas = historico.disciplinas.all()
-        disciplinas_data = [
-            {
-                "codigo": disciplina.codigo,
-                "nome": disciplina.nome,
-                "professor": disciplina.professor,
-                "tipo": disciplina.tipo,
-                "creditos": disciplina.creditos,
-                "carga_horaria": disciplina.carga_horaria,
-                "media": disciplina.media,
-                "situacao": disciplina.situacao,
-                "periodo": disciplina.periodo
-            }
-            for disciplina in disciplinas
-        ]
-
-        response_data = {
-            "cra": historico.cra,
-            "disciplinas": disciplinas_data
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
     except Aluno.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def interessar_no_projeto(request, projeto_id):
