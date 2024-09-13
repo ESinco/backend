@@ -26,3 +26,9 @@ class Associacao(models.Model):
     projeto = models.ForeignKey(Projeto, null= False, on_delete=models.CASCADE)
     aluno = models.ForeignKey(Aluno, null=False, on_delete=models.CASCADE)
     status = models.TextField(null=True)
+    
+class Colaborador(models.Model):
+    id = models.AutoField(primary_key=True)
+    professor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
+    projeto = models.ForeignKey(Projeto, null=False, on_delete=models.CASCADE)
+    
