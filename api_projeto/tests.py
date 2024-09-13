@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.utils import timezone
 from datetime import datetime
 
-from api_projeto.models import Projeto, Associacao
+from api_projeto.models import Projeto, Associacao, Colaborador
 from api_professor.models import Professor
 from api_aluno.models import Aluno
 from api_projeto.views import *
@@ -421,3 +421,60 @@ class GetAllProjetosByAlunoViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual("Nenhum projeto encontrado.", response.data['detail'])
+        
+class CadastrarColaboradorTests(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_responsavel = User.objects.create_user(username='professor_responsavel@example.com', password='1234')
+        self.professor_responsavel = Professor.objects.create(user=self.user_responsavel, nome='Professor Responsável', email='professor_responsavel@example.com')
+
+        self.user_colaborador = User.objects.create_user(username='professor_colaborador@example.com', password='1234')
+        self.professor_colaborador = Professor.objects.create(user=self.user_colaborador, nome='Professor Colaborador', email='professor_colaborador@example.com')
+
+        self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor_responsavel)
+
+        self.url = reverse('cadastrar_colaborador', args=[self.projeto.id_projeto, self.professor_colaborador.email])
+        self.client.force_authenticate(user=self.user_responsavel)
+
+    def test_cadastrar_colaborador_com_sucesso(self):
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['detail'], 'Associação criada com sucesso.')
+        self.assertEqual(Colaborador.objects.count(), 1)
+        
+    def test_projeto_nao_encontrado(self):
+        # Tentando associar a um projeto que não existe
+        url_projeto_invalido = reverse('cadastrar_colaborador', args=[9999, self.professor_colaborador.email])
+        response = self.client.post(url_projeto_invalido, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Projeto não encontrado.')
+    
+    def test_professor_nao_responsavel_acesso_negado(self):
+        # Autenticar como outro professor que não é o responsável
+        user_professor_nao_responsavel = User.objects.create_user(username='outro_professor@example.com', password='1234')
+        professor_nao_responsavel = Professor.objects.create(user=user_professor_nao_responsavel, nome='Outro Professor', email='outro_professor@example.com')
+
+        self.client.force_authenticate(user=user_professor_nao_responsavel)
+        response = self.client.post(self.url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'Acesso negado. Apenas o responsavel do projeto pode cadastrar um colaborador.')
+
+    def test_professor_colaborador_nao_encontrado(self):
+        # Tentando associar um professor colaborador que não existe
+        url_colaborador_invalido = reverse('cadastrar_colaborador', args=[self.projeto.id_projeto, 'nao_existe@example.com'])
+        response = self.client.post(url_colaborador_invalido, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Professor colaborador não encontrado.')
+
+    def test_professor_ja_e_colaborador(self):
+        # Tentando criar colaborador duas vezes
+        Colaborador.objects.create(professor=self.professor_colaborador, projeto=self.projeto)
+
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Professor ja é colaborador desse projeto.')
