@@ -516,7 +516,7 @@ class AlunoUpdateTests(APITestCase):
             cra=9.3,
             user=self.usuario
         )
-        self.url_editar = reverse('editar_perfil_aluno', args=[self.aluno.matricula])
+        self.url_editar = reverse('editar_perfil_aluno')
         self.client.force_authenticate(user=self.usuario)
 
     def test_editar_aluno_total(self):
@@ -588,7 +588,8 @@ class AlunoUpdateTests(APITestCase):
         self.assertEqual(self.aluno.cra, 9.3)
 
     def test_editar_aluno_nao_existe(self):
-        url = reverse('editar_perfil_aluno', kwargs={'matricula': '999999999'})
+        self.client.login(username="testuser", password="password123")
+        self.aluno.delete()
 
         data = {
             'curriculo': 'Novo Currículo', 
@@ -596,5 +597,5 @@ class AlunoUpdateTests(APITestCase):
             'linkedin': 'https://linkedin.com/in/new', 
         }
 
-        response = self.client.put(url, data, format='json')
+        response = self.client.put(self.url_editar, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
