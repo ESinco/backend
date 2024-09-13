@@ -29,9 +29,9 @@ def criar_aluno(request):
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def editar_perfil_aluno(request, matricula):
+def editar_perfil_aluno(request):
     try:
-        aluno = Aluno.objects.get(pk=matricula)
+        aluno = Aluno.objects.get(user=request.user)
     except Aluno.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -40,6 +40,7 @@ def editar_perfil_aluno(request, matricula):
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET'])
 def get_all_alunos(request):

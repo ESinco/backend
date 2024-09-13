@@ -11,7 +11,7 @@ urlpatterns = [
     path('historico/<str:matricula>/', views.visualizar_historico, name='visualizar_historico'),
     path('interesse_projeto/<int:projeto_id>/', views.interessar_no_projeto, name='interessar_no_projeto'),
     path('retirar_interesse_projeto/<int:projeto_id>/', views.retirar_interessar_no_projeto, name='retirar_interesse_no_projeto'),
-    path('editar/<str:matricula>/', views.editar_perfil_aluno, name='editar_perfil_aluno'),
+    path('editar_perfil/', views.editar_perfil_aluno, name='editar_perfil_aluno'),
     path('<str:matricula>/', views.get_by_matricula_aluno, name='get_by_matricula_aluno'),
     path('', views.get_all_alunos, name='get_all_alunos'),
 ]
