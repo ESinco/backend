@@ -12,7 +12,7 @@ from .utils import extrair_disciplinas_do_pdf
 from .models import *
 from .serializers import *
 from api_projeto.models import Projeto, Associacao
-
+from api_rest.models import *
 
 @api_view(['POST'])
 def criar_aluno(request):
@@ -35,12 +35,32 @@ def editar_perfil_aluno(request):
     except Aluno.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    serializer = AlunoPutSerializer(aluno, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    nome = request.data.get('nome')
+    curriculo = request.data.get('curriculo')
+    email = request.data.get('email')
+    github = request.data.get('github')
+    linkedin = request.data.get('linkedin')
+    habilidades = request.data.get('habilidades', [])
+    experiencias = request.data.get('experiencias', [])
+    interesses = request.data.get('interesses', [])
 
+    aluno.nome = nome
+    aluno.curriculo = curriculo
+    aluno.email = email
+    aluno.github = github
+    aluno.linkedin = linkedin
+
+    habilidades_objetos = list(map(lambda habilidade: Habilidade.objects.get(pk=habilidade['nome']), habilidades))
+    experiencias_objetos = list(map(lambda experiencia: Experiencia.objects.get(pk=experiencia['nome']), experiencias))
+    interesses_objetos = list(map(lambda interesse: Interesse.objects.get(pk=interesse['nome']), interesses))
+    aluno.habilidades.set(habilidades_objetos)
+    aluno.experiencias.set(experiencias_objetos)
+    aluno.interesses.set(interesses_objetos)
+    
+    aluno.save()
+
+    serializer = AlunoPerfilSerializer(aluno)
+    return Response(serializer.data)
 
 @api_view(['GET'])
 def get_all_alunos(request):

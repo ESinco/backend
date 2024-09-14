@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from api_professor.models import Professor
-from api_rest.models import Habilidade, Experiencia, Interesse, Feedback
+from api_rest.models import *
 
 
 class Aluno(models.Model):
