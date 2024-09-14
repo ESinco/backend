@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -11,7 +13,8 @@ from datetime import datetime
 
 from api_projeto.models import Projeto, Associacao
 from api_professor.models import Professor
-from api_aluno.models import Aluno
+from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
+from api_rest.models import Habilidade, Experiencia, Interesse
 from api_projeto.views import *
 
 from io import StringIO
@@ -421,3 +424,313 @@ class GetAllProjetosByAlunoViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual("Nenhum projeto encontrado.", response.data['detail'])
+        
+        
+
+class FiltragemPelaDisciplinaViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario_aluno = User.objects.create_user(
+            username='levi@example.com',
+            email='levi@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula="232323232",
+            nome="levi", 
+            email="levi@example.com", 
+            user=self.usuario_aluno
+        )
+        self.usuario_professor = User.objects.create_user(
+            username='professor@teste.com', 
+            email='professor@teste.com',                                              
+            password='senha123'
+        )
+        self.professor = Professor.objects.create(
+            user=self.usuario_professor, 
+            nome='Professor Teste', 
+            email='professor@teste.com'
+        )
+        self.projeto = Projeto.objects.create(
+            nome="Projeto 1", 
+            descricao="Descrição 1", 
+            laboratorio="Dono 1", 
+            vagas=5, 
+            responsavel=self.professor
+        )
+        self.historico = HistoricoAcademico.objects.create(
+            aluno = self.aluno,
+            historico_pdf='/media/historicos/historico.pdf',
+            cra=8.9
+        )
+        self.disciplina = Disciplina.objects.create(
+            historico=self.historico,
+            codigo="1212555",
+            nome="Engenharia de Software",
+            professor="Rohit Gheyi",
+            tipo="obrigatória",
+            creditos=4,
+            carga_horaria=20,
+            media=9.6,
+            situacao="Aprovado",
+            periodo="2024.1"
+        )
+        self.associacao = Associacao.objects.create(
+            projeto=self.projeto,
+            aluno=self.aluno,
+            status=None
+        )
+        self.parametros = {
+            "alunos": ["232323232"],
+            "disciplina": self.disciplina.codigo,
+            "nota": ''
+        }
+        self.url = reverse('filtragem_disciplina')
+        self.refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh.access_token}')
+
+    def test_filtragem_de_projetos_pela_disciplina_sucesso(self):
+        response = self.client.post(self.url, self.parametros, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) > 0)
+        self.assertEqual('232323232', response.data[0]['matricula'])
+        self.assertEqual('levi', response.data[0]['nome'])
+        self.assertEqual('levi@example.com', response.data[0]['email'])
+        
+
+
+class FiltragemPeloCraViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario_aluno = User.objects.create_user(
+            username='levi@example.com',
+            email='levi@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula="232323232",
+            nome="levi", 
+            email="levi@example.com", 
+            user=self.usuario_aluno
+        )
+        self.usuario_professor = User.objects.create_user(
+            username='professor@teste.com', 
+            email='professor@teste.com',                                              
+            password='senha123'
+        )
+        self.professor = Professor.objects.create(
+            user=self.usuario_professor, 
+            nome='Professor Teste', 
+            email='professor@teste.com'
+        )
+        self.projeto = Projeto.objects.create(
+            nome="Projeto 1", 
+            descricao="Descrição 1", 
+            laboratorio="Dono 1", 
+            vagas=5, 
+            responsavel=self.professor
+        )
+        self.historico = HistoricoAcademico.objects.create(
+            aluno = self.aluno,
+            historico_pdf='/media/historicos/historico.pdf',
+            cra=8.9
+        )
+        self.associacao = Associacao.objects.create(
+            projeto=self.projeto,
+            aluno=self.aluno,
+            status=None
+        )
+        self.parametros = {
+            "alunos": ["232323232"],
+            "cra": '8.0'
+        }
+        self.url = reverse('filtragem_cra')
+        self.refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh.access_token}')
+
+    def test_filtragem_de_projetos_pelo_cra_sucesso(self):
+        response = self.client.post(self.url, self.parametros, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) > 0)
+        self.assertEqual('232323232', response.data[0]['matricula'])
+        self.assertEqual('levi', response.data[0]['nome'])
+        self.assertEqual('levi@example.com', response.data[0]['email'])
+        
+
+class FiltragemPelaHabilidadeViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario_aluno = User.objects.create_user(
+            username='levi@example.com',
+            email='levi@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula="232323232",
+            nome="levi", 
+            email="levi@example.com", 
+            user=self.usuario_aluno
+        )
+        self.usuario_professor = User.objects.create_user(
+            username='professor@teste.com', 
+            email='professor@teste.com',                                              
+            password='senha123'
+        )
+        self.professor = Professor.objects.create(
+            user=self.usuario_professor, 
+            nome='Professor Teste', 
+            email='professor@teste.com'
+        )
+        self.projeto = Projeto.objects.create(
+            nome="Projeto 1", 
+            descricao="Descrição 1", 
+            laboratorio="Dono 1", 
+            vagas=5, 
+            responsavel=self.professor
+        )
+        self.associacao = Associacao.objects.create(
+            projeto=self.projeto,
+            aluno=self.aluno,
+            status=None
+        )
+        self.tag = Habilidade.objects.create(
+            nome="Organização de Projetos",
+            grupo="Soft Skills"
+        )
+        self.aluno.habilidades.add(self.tag)
+        self.parametros = {
+            "alunos": ["232323232"],            
+            "habilidade": self.tag.nome
+        }
+        self.url = reverse('filtragem_habilidade')
+        self.refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh.access_token}')
+
+    def test_filtragem_de_projetos_pela_habilidade_sucesso(self):
+        response = self.client.post(self.url, self.parametros, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) > 0)
+        self.assertEqual('232323232', response.data[0]['matricula'])
+        self.assertEqual('levi', response.data[0]['nome'])
+        self.assertEqual('levi@example.com', response.data[0]['email'])
+        
+
+class FiltragemPelaExperienciaViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario_aluno = User.objects.create_user(
+            username='levi@example.com',
+            email='levi@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula="232323232",
+            nome="levi", 
+            email="levi@example.com", 
+            user=self.usuario_aluno
+        )
+        self.usuario_professor = User.objects.create_user(
+            username='professor@teste.com', 
+            email='professor@teste.com',                                              
+            password='senha123'
+        )
+        self.professor = Professor.objects.create(
+            user=self.usuario_professor, 
+            nome='Professor Teste', 
+            email='professor@teste.com'
+        )
+        self.projeto = Projeto.objects.create(
+            nome="Projeto 1", 
+            descricao="Descrição 1", 
+            laboratorio="Dono 1", 
+            vagas=5, 
+            responsavel=self.professor
+        )
+        self.associacao = Associacao.objects.create(
+            projeto=self.projeto,
+            aluno=self.aluno,
+            status=None
+        )
+        self.tag = Experiencia.objects.create(
+            nome="Gestão de Equipes",
+            grupo="Experiências"
+        )
+        self.aluno.experiencias.add(self.tag)
+        self.parametros = {
+            "alunos": ["232323232"],            
+            "experiencia": self.tag.nome
+        }
+        self.url = reverse('filtragem_experiencia')
+        self.refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh.access_token}')
+
+    def test_filtragem_de_projetos_pela_experiencia_sucesso(self):
+        response = self.client.post(self.url, self.parametros, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) > 0)
+        self.assertEqual('232323232', response.data[0]['matricula'])
+        self.assertEqual('levi', response.data[0]['nome'])
+        self.assertEqual('levi@example.com', response.data[0]['email'])
+        
+
+class FiltragemPeloInteresseViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario_aluno = User.objects.create_user(
+            username='levi@example.com',
+            email='levi@example.com',
+            password='1234'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula="232323232",
+            nome="levi", 
+            email="levi@example.com", 
+            user=self.usuario_aluno
+        )
+        self.usuario_professor = User.objects.create_user(
+            username='professor@teste.com', 
+            email='professor@teste.com',                                              
+            password='senha123'
+        )
+        self.professor = Professor.objects.create(
+            user=self.usuario_professor, 
+            nome='Professor Teste', 
+            email='professor@teste.com'
+        )
+        self.projeto = Projeto.objects.create(
+            nome="Projeto 1", 
+            descricao="Descrição 1", 
+            laboratorio="Dono 1", 
+            vagas=5, 
+            responsavel=self.professor
+        )
+        self.associacao = Associacao.objects.create(
+            projeto=self.projeto,
+            aluno=self.aluno,
+            status=None
+        )
+        self.tag = Interesse.objects.create(
+            nome="Banco de Dados",
+            grupo="Interesses"
+        )
+        self.aluno.interesses.add(self.tag)
+        self.parametros = {
+            "alunos": ["232323232"],
+            "interesse": self.tag.nome
+        }
+        self.url = reverse('filtragem_interesse')
+        self.refresh = RefreshToken.for_user(self.usuario_professor)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh.access_token}')
+
+    def test_filtragem_de_projetos_pelo_interesse_sucesso(self):
+        response = self.client.post(self.url, self.parametros, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) > 0)
+        self.assertEqual('232323232', response.data[0]['matricula'])
+        self.assertEqual('levi', response.data[0]['nome'])
+        self.assertEqual('levi@example.com', response.data[0]['email'])
