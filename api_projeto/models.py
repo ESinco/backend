@@ -26,3 +26,15 @@ class Associacao(models.Model):
     projeto = models.ForeignKey(Projeto, null= False, on_delete=models.CASCADE)
     aluno = models.ForeignKey(Aluno, null=False, on_delete=models.CASCADE)
     status = models.TextField(null=True)
+    
+class Filtro(models.Model):
+    id_filtro = models.AutoField(primary_key=True)
+    id_professor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
+    id_projeto = models.ForeignKey(Projeto, null=False, on_delete=models.CASCADE)
+    criterios = models.JSONField()
+    alunos = models.ManyToManyField(Aluno, related_name="lista_filtradas")
+    
+    def __str__(self):
+        return (f'Filtro {self.id_filtro}\n'
+               f'Professor {self.id_professor}\n'
+               f'Projeto {self.id_projeto}\n')
