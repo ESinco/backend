@@ -10,8 +10,6 @@ from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
 import os
 
 
-#Models
-# Testando model de ALuno.
 class AlunoModelTestCase(TestCase):
 
     def setUp(self):
@@ -47,9 +45,7 @@ class AlunoModelTestCase(TestCase):
         self.assertEqual(str(self.aluno), expected_str)
 
 
-#Views
-# Testando POST de alunoes
-class CriarAlunoViewTest(APITestCase):
+class CriarAlunoViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('criar_aluno')
@@ -133,8 +129,8 @@ class CriarAlunoViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('senha', response.data)
 
-# Testando GET de todos os alunos.
-class getAllAlunoViewTest(APITestCase):
+
+class getAllAlunoViewTestCase(APITestCase):
     
     def setUp(self):
         self.client = APIClient()
@@ -167,8 +163,8 @@ class getAllAlunoViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
         
-# Testando GET de pegar Aluno por matricula.
-class getAlunoPorMatriculaTest(APITestCase):
+
+class getAlunoPorMatriculaTestCase(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -206,7 +202,7 @@ class getAlunoPorMatriculaTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-class HistoricoAcademicoTests(APITestCase):
+class HistoricoAcademicoTestCase(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
@@ -272,9 +268,9 @@ class HistoricoAcademicoTests(APITestCase):
 
         disciplinas = Disciplina.objects.filter(historico=historico)
         self.assertGreater(len(disciplinas), 0)
-       
-        
-class LoginAlunoViewTest(APITestCase):
+
+
+class LoginAlunoViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('login_aluno')
@@ -339,8 +335,7 @@ class LoginAlunoViewTest(APITestCase):
             "senha": "12345"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
+
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
         self.assertEqual(response.data['detail'], 'Senha incorreta.')

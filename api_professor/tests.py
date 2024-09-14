@@ -7,8 +7,7 @@ from api_professor.models import Professor
 from django.contrib.auth.models import User
 
 
-# Models
-class ProfessorModelTest(TestCase):
+class ProfessorModelTestCase(APITestCase):
     def setUp(self):
         self.usuario = User.objects.create_user(
             username='andre@example.com',
@@ -34,8 +33,7 @@ class ProfessorModelTest(TestCase):
         self.assertEqual(str(self.professor), expected_str)
 
 
-# Views
-class CriarProfessorViewTest(APITestCase):
+class CriarProfessorViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('criar_professor')
@@ -101,7 +99,7 @@ class CriarProfessorViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class GetAllProfessorViewTest(APITestCase):
+class GetAllProfessorViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('get_all_professores')
@@ -131,7 +129,7 @@ class GetAllProfessorViewTest(APITestCase):
         self.assertEqual(len(response.data), 0)
 
 
-class GetProfessorPorIdTest(APITestCase):
+class GetProfessorPorIdTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
 
@@ -157,7 +155,7 @@ class GetProfessorPorIdTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-class LoginProfessorViewTest(APITestCase):
+class LoginProfessorViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('login_professor')

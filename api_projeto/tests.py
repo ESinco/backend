@@ -17,8 +17,8 @@ from io import StringIO
 import os
 import pytz
 
-#Model
-class ProjetoModelTests(TestCase):
+
+class ProjetoModelTestCase(TestCase):
 
     def setUp(self):
         self.usuario = User.objects.create_user(
@@ -60,9 +60,8 @@ class ProjetoModelTests(TestCase):
         )
         self.assertEqual(expected_str, str(self.projeto), "A representação em string do projeto está incorreta.")
 
-        
-#Views Tests
-class CriarProjetoViewTest(APITestCase):
+
+class CriarProjetoViewTestCase(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -153,9 +152,8 @@ class CriarProjetoViewTest(APITestCase):
         self.assertIn("detail", response.data)
         self.assertEqual(response.data["detail"], "Acesso negado. Apenas professores podem criar projetos.")
 
-    
-# Testes de GETALL projetos
-class GetProjetosViewTests(APITestCase):
+
+class GetProjetosViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('get_projetos')
@@ -185,8 +183,8 @@ class GetProjetosViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
         
-# Testes de GETbyId para projetos
-class GetByIdProjetoViewTest(APITestCase):
+
+class GetProjetoByIdViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         usuario = User.objects.create_user(
@@ -208,8 +206,8 @@ class GetByIdProjetoViewTest(APITestCase):
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-# Testes para a View de get_all_projetos_by_professor
-class GetAllProjetosByProfessorViewTest(APITestCase):
+
+class GetAllProjetosByProfessorViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         usuario = User.objects.create_user(
@@ -242,7 +240,8 @@ class GetAllProjetosByProfessorViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
         
-class CriarProjetoCSVTests(APITestCase):
+
+class CriarProjetoCSVTestCase(APITestCase):
 
     def setUp(self):
         # Criar usuário e professor autenticado
@@ -319,7 +318,7 @@ class CriarProjetoCSVTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class GetAllProjetosByAlunoViewTest(APITestCase):
+class GetAllProjetosByAlunoViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.usuario_aluno = User.objects.create_user(
@@ -382,7 +381,7 @@ class GetAllProjetosByAlunoViewTest(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh}')        
         response = self.client.get(self.url, format='json')
         
-        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['code'], "token_not_valid")
         self.assertEqual(response.data['messages'][0]['message'], "Token tem tipo errado")
 
