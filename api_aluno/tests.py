@@ -8,6 +8,7 @@ from api_aluno.views import *
 from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
 from api_professor.models import Professor
 from api_projeto.models import Projeto
+from api_rest.models import *
 
 import os
 
@@ -519,23 +520,46 @@ class AlunoUpdateTests(APITestCase):
         self.url_editar = reverse('editar_perfil_aluno')
         self.client.force_authenticate(user=self.usuario)
 
-    def test_editar_aluno_total(self):
-        nome_antigo = self.aluno.nome
-        email_antigo = self.aluno.email
-        curriculo_antigo = self.aluno.curriculo
-        github_antigo = self.aluno.github
-        linkedin_antigo = self.aluno.linkedin
-        cra_antigo = self.aluno.cra
+        self.habilidade = Habilidade.objects.create(nome='Programação', grupo='Hard Skills')
+        self.experiencia = Experiencia.objects.create(nome='Gestão de Projetos', grupo='Experiências')
+        self.interesse = Interesse.objects.create(nome='Inteligência Artificial', grupo='Interesses')
+        self.habilidade_nova1 = Habilidade.objects.create(nome='Banco de Dados', grupo='Hard Skills')
+        self.habilidade_nova2 = Habilidade.objects.create(nome='Proatividade', grupo='Soft Skills')
+        self.experiencia_nova1 = Experiencia.objects.create(nome='Migração de Sistemas', grupo='Experiências')
+        self.experiencia_nova2 = Experiencia.objects.create(nome='APIs', grupo='Experiências')
+        self.interesse_novo1 = Interesse.objects.create(nome='Cybersegurança', grupo='Interesses')
+        self.interesse_novo2 = Interesse.objects.create(nome='Análise de Dados', grupo='Interesses')
 
-        data = {
+        self.aluno.habilidades.add(self.habilidade)
+        self.aluno.experiencias.add(self.experiencia)
+        self.aluno.interesses.add(self.interesse)
+
+        self.data = {
             'nome': 'Novo Nome', 
             'curriculo': 'Novo Currículo', 
             'email': 'newtestuser@example.com',
             'github': 'https://github.com/new', 
             'linkedin': 'https://linkedin.com/in/new', 
-            'cra': 10}
+            'habilidades': [{"nome": self.habilidade_nova1.nome, "grupo": self.habilidade_nova1.grupo}, 
+                            {"nome": self.habilidade_nova2.nome, "grupo": self.habilidade_nova2.grupo}], 
+            'experiencias': [{"nome": self.experiencia_nova1.nome, "grupo": self.experiencia_nova1.grupo}, 
+                             {"nome" : self.experiencia_nova2.nome, "grupo" : self.experiencia_nova2.grupo}], 
+            'interesses': [{"nome": self.interesse_novo1.nome, "grupo": self.interesse_novo1.grupo}, 
+                           {"nome": self.interesse_novo2.nome, "grupo": self.interesse_novo2.grupo}]        
+            }
+        
+    def test_editar_aluno_todas_as_informacoes(self):
+        nome_antigo = self.aluno.nome
+        email_antigo = self.aluno.email
+        curriculo_antigo = self.aluno.curriculo
+        github_antigo = self.aluno.github
+        linkedin_antigo = self.aluno.linkedin
 
-        response = self.client.put(self.url_editar, data, format='json')
+        habilidades_antigas = list(self.aluno.habilidades.all())
+        experiencias_antigas = list(self.aluno.experiencias.all())
+        interesses_antigos = list(self.aluno.interesses.all())
+
+        response = self.client.put(self.url_editar, self.data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.aluno.refresh_from_db()
@@ -545,30 +569,38 @@ class AlunoUpdateTests(APITestCase):
         self.assertNotEqual(self.aluno.curriculo, curriculo_antigo)
         self.assertNotEqual(self.aluno.github, github_antigo)
         self.assertNotEqual(self.aluno.linkedin, linkedin_antigo)
-        self.assertNotEqual(self.aluno.cra, cra_antigo)
 
         self.assertEqual(self.aluno.nome, 'Novo Nome')
         self.assertEqual(self.aluno.email, 'newtestuser@example.com')
         self.assertEqual(self.aluno.curriculo, 'Novo Currículo')
         self.assertEqual(self.aluno.github, 'https://github.com/new')
         self.assertEqual(self.aluno.linkedin, 'https://linkedin.com/in/new')
-        self.assertEqual(self.aluno.cra, 10)
+
+        habilidades_novas = list(self.aluno.habilidades.all())
+        experiencias_novas = list(self.aluno.experiencias.all())
+        interesses_novos = list(self.aluno.interesses.all())
+
+        self.assertNotEqual(habilidades_novas, habilidades_antigas)
+        self.assertNotEqual(experiencias_novas, experiencias_antigas)
+        self.assertNotEqual(interesses_novos, interesses_antigos)
     
-    def test_editar_aluno_parcial(self):
+    def test_editar_aluno_informacoes_especificas(self):
         nome_antigo = self.aluno.nome
         email_antigo = self.aluno.email
         curriculo_antigo = self.aluno.curriculo
         github_antigo = self.aluno.github
         linkedin_antigo = self.aluno.linkedin
-        cra_antigo = self.aluno.cra
 
-        data = {
-            'curriculo': 'Novo Currículo', 
-            'github': 'https://github.com/new', 
-            'linkedin': 'https://linkedin.com/in/new', 
-        }
+        habilidades_antigas = list(self.aluno.habilidades.all())
+        experiencias_antigas = list(self.aluno.experiencias.all())
+        interesses_antigos = list(self.aluno.interesses.all())
 
-        response = self.client.put(self.url_editar, data, format='json')
+        self.data['nome'] = self.aluno.nome
+        self.data['email'] = self.aluno.email
+        self.data['habilidades'] = [{"nome": self.habilidade.nome, "grupo": self.habilidade.grupo}] 
+        self.data['experiencias'] = [{"nome": self.experiencia.nome, "grupo": self.experiencia.grupo}] 
+
+        response = self.client.put(self.url_editar, self.data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.aluno.refresh_from_db()
@@ -578,24 +610,29 @@ class AlunoUpdateTests(APITestCase):
         self.assertNotEqual(self.aluno.curriculo, curriculo_antigo)
         self.assertNotEqual(self.aluno.github, github_antigo)
         self.assertNotEqual(self.aluno.linkedin, linkedin_antigo)
-        self.assertEqual(self.aluno.cra, cra_antigo)
 
         self.assertEqual(self.aluno.nome, 'João da Silva')
         self.assertEqual(self.aluno.email, 'joao.silva@example.com')
         self.assertEqual(self.aluno.curriculo, 'Novo Currículo')
         self.assertEqual(self.aluno.github, 'https://github.com/new')
         self.assertEqual(self.aluno.linkedin, 'https://linkedin.com/in/new')
-        self.assertEqual(self.aluno.cra, 9.3)
+        
+        habilidades_novas = list(self.aluno.habilidades.all())
+        experiencias_novas = list(self.aluno.experiencias.all())
+        interesses_novos = list(self.aluno.interesses.all())
+
+        self.assertEqual(habilidades_novas, habilidades_antigas)
+        self.assertEqual(experiencias_novas, experiencias_antigas)
+        self.assertNotEqual(interesses_novos, interesses_antigos)
 
     def test_editar_aluno_nao_existe(self):
-        self.client.login(username="testuser", password="password123")
+        outro_usuario = User.objects.create_user(
+            username='testuser@example.com',
+            email='testuser@example.com',
+            password='senhaSegura'
+        )
+        self.client.force_authenticate(user=outro_usuario)
         self.aluno.delete()
 
-        data = {
-            'curriculo': 'Novo Currículo', 
-            'github': 'https://github.com/new', 
-            'linkedin': 'https://linkedin.com/in/new', 
-        }
-
-        response = self.client.put(self.url_editar, data, format='json')
+        response = self.client.put(self.url_editar, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
