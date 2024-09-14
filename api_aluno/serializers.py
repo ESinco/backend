@@ -28,11 +28,11 @@ class AlunoSerializer(serializers.ModelSerializer):
         model = Aluno
         fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin', 'cra']
 
-class AlunoLoginSerializer(serializers.ModelSerializer):
+class AlunoInformacoesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = ['matricula', 'nome', 'email']
-
+        
 class DisciplinaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina
