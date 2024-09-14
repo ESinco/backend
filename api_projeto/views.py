@@ -10,6 +10,8 @@ from rest_framework import status
 
 from .models import *
 from .serializers import *
+from api_aluno.models import HistoricoAcademico, Disciplina
+from api_aluno.serializers import AlunoInformacoesSerializer
 
 from io import StringIO
 
@@ -87,9 +89,7 @@ def criar_projeto_csv(request):
             except Aluno.DoesNotExist:
                 matricula_inexistente.append(matricula)
     
-    return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)
-    
-       
+    return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)  
    
 @api_view(['GET'])
 def get_projetos(request):
@@ -152,4 +152,170 @@ def get_all_projetos_by_aluno(request):
         
         return Response(projetos_com_status, status=status.HTTP_200_OK)
 
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def filtragem_disciplina(request):
+    if request.method == 'POST':
+        disciplina = request.data.get('disciplina')
+        nota = request.data.get('nota')
+        alunos = request.data.get('alunos')
+        try:
+            Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem realizar filtragens."}, status=status.HTTP_403_FORBIDDEN)
+      
+        if not alunos or not disciplina:
+            return Response({'detail': 'Não há parâmetros para filtrar.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        alunos_filtrados = []
+        for aluno_id in alunos:
+            try:
+                aluno = Aluno.objects.get(pk=aluno_id)
+            except Aluno.DoesNotExist:
+                continue
+
+            informacoesAluno = AlunoInformacoesSerializer(aluno).data
+            historico = HistoricoAcademico.objects.filter(aluno=aluno).first()
+            if not historico:
+                continue
+            
+            disciplina_historico = Disciplina.objects.get(historico=historico, codigo=disciplina)
+            if not disciplina_historico:
+                continue
+            
+            if not nota == '':
+                if disciplina_historico.media is None or disciplina_historico.media < float(nota):
+                    continue
+                
+            alunos_filtrados.append(informacoesAluno)
+            
+        return Response(alunos_filtrados, status.HTTP_200_OK)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def filtragem_cra(request):
+    if request.method == 'POST':
+        alunos = request.data.get('alunos')
+        cra = request.data.get('cra')
+        try:
+            Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem realizar filtragens."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if not alunos or not cra:
+            return Response({'detail': 'Não há parâmetros para filtrar.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        alunos_filtrados = []
+        for aluno_id in alunos:
+            try:
+                aluno = Aluno.objects.get(pk=aluno_id)
+            except Aluno.DoesNotExist:
+                continue
+
+            informacoesAluno = AlunoInformacoesSerializer(aluno).data
+            historico = HistoricoAcademico.objects.filter(aluno=aluno).first()
+            if not historico:
+                continue
+            
+            if not cra == '':
+                if historico.cra is None or historico.cra < float(cra):
+                    continue
+                
+            alunos_filtrados.append(informacoesAluno)
+            
+        return Response(alunos_filtrados, status.HTTP_200_OK)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def filtragem_habilidade(request):
+    if request.method == 'POST':
+        alunos = request.data.get('alunos')
+        habilidade = request.data.get('habilidade')
+        try:
+            Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem realizar filtragens."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if not alunos or not habilidade:
+            return Response({'detail': 'Não há parâmetros para filtrar.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        alunos_filtrados = []
+        for aluno_id in alunos:
+            try:
+                aluno = Aluno.objects.get(pk=aluno_id)
+            except Aluno.DoesNotExist:
+                continue
+            
+            if aluno.habilidades.filter(nome=habilidade).exists():
+                informacoesAluno = AlunoInformacoesSerializer(aluno).data
+                informacoesAluno['habilidades'] = [habilidade.nome for habilidade in aluno.habilidades.all()]
+                
+                alunos_filtrados.append(informacoesAluno)
+            
+        return Response(alunos_filtrados, status.HTTP_200_OK)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def filtragem_experiencia(request):
+    if request.method == 'POST':
+        alunos = request.data.get('alunos')
+        experiencia = request.data.get('experiencia')
+        try:
+            Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem realizar filtragens."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if not alunos or not experiencia:
+            return Response({'detail': 'Não há parâmetros para filtrar.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        alunos_filtrados = []
+        for aluno_id in alunos:
+            try:
+                aluno = Aluno.objects.get(pk=aluno_id)
+            except Aluno.DoesNotExist:
+                continue
+            
+            if aluno.experiencias.filter(nome=experiencia).exists():
+                informacoesAluno = AlunoInformacoesSerializer(aluno).data
+                informacoesAluno['experiencias'] = [experiencia.nome for experiencia in aluno.experiencias.all()]
+                
+                alunos_filtrados.append(informacoesAluno)
+            
+        return Response(alunos_filtrados, status.HTTP_200_OK)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def filtragem_interesse(request):
+    if request.method == 'POST':
+        alunos = request.data.get('alunos')
+        interesse = request.data.get('interesse')
+        try:
+            Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem realizar filtragens."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if not alunos or not interesse:
+            return Response({'detail': 'Não há parâmetros para filtrar.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        alunos_filtrados = []
+        for aluno_id in alunos:
+            try:
+                aluno = Aluno.objects.get(pk=aluno_id)
+            except Aluno.DoesNotExist:
+                continue
+            
+            if aluno.interesses.filter(nome=interesse).exists():
+                informacoesAluno = AlunoInformacoesSerializer(aluno).data
+                informacoesAluno['interesses'] = [interesse.nome for interesse in aluno.interesses.all()]
+                
+                alunos_filtrados.append(informacoesAluno)
+            
+        return Response(alunos_filtrados, status.HTTP_200_OK)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
