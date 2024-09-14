@@ -6,6 +6,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from api_aluno.views import *
 from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
+from api_professor.models import Professor
+
+from api_projeto.models import Projeto
 
 import os
 
@@ -201,16 +204,14 @@ class getAlunoPorMatriculaTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-
-class HistoricoAcademicoTestCase(APITestCase):
-
+class HistoricoAcademicoTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        usuario = User.objects.create_user(
+        cls.usuario = User.objects.create_user(
             username='joao.silva@example.com',
             email='joao.silva@example.com',
             password='senhaSegura'
-        )  
+        )
         cls.aluno = Aluno.objects.create(
             matricula="123456789",
             nome="João da Silva",
@@ -219,11 +220,9 @@ class HistoricoAcademicoTestCase(APITestCase):
             github="https://github.com/joaosilva",
             linkedin="https://linkedin.com/in/joaosilva",
             cra=9.3,
-            user=usuario
+            user=cls.usuario
         )
         cls.url_upload = reverse('upload_historico')
-
-        # Caminho para o PDF de teste
         cls.pdf_path = os.path.join(os.path.dirname(__file__), 'test_data', 'historico.pdf')
 
         if not os.path.exists(cls.pdf_path):
@@ -231,7 +230,22 @@ class HistoricoAcademicoTestCase(APITestCase):
 
         cls.url_visualizar = reverse('visualizar_historico', kwargs={'matricula': cls.aluno.matricula})
 
-    def test_aluno_upload_historico(self):
+    def test_upload_historico(self):
+        with open(self.pdf_path, 'rb') as pdf_file:
+            response = self.client.post(
+                self.url_upload,
+                data={'aluno': self.aluno.matricula, 'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
+                format='multipart'
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+            self.assertIsNotNone(historico)
+            self.assertTrue(os.path.isfile(historico.historico_pdf.path))
+            self.assertIsNotNone(historico.cra)
+            disciplinas = Disciplina.objects.filter(historico=historico)
+            self.assertGreater(len(disciplinas), 0)
+
+    def test_upload_novo_historico_apaga_antigo(self):
         with open(self.pdf_path, 'rb') as pdf_file:
             response = self.client.post(
                 self.url_upload,
@@ -240,28 +254,121 @@ class HistoricoAcademicoTestCase(APITestCase):
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-            historico = HistoricoAcademico.objects.filter(aluno=self.aluno).first()
-            self.assertIsNotNone(historico)
+        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        caminho_pdf_antigo = historico.historico_pdf.path
+        disciplinas_anteriores = Disciplina.objects.filter(historico=historico)
+        self.assertTrue(os.path.isfile(caminho_pdf_antigo))
+        self.assertGreater(len(disciplinas_anteriores), 0)
 
-            disciplinas = Disciplina.objects.filter(historico=historico)
-            self.assertGreater(len(disciplinas), 0)
+        with open(self.pdf_path, 'rb') as novo_pdf_file:
+            response = self.client.post(
+                self.url_upload,
+                data={'aluno': self.aluno.matricula, 'historico_pdf': SimpleUploadedFile('historico_novo.pdf', novo_pdf_file.read())},
+                format='multipart'
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_aluno_visualizar_historico(self):
-        self.test_aluno_upload_historico()
+        self.assertFalse(os.path.isfile(caminho_pdf_antigo))
+        historico_atualizado = HistoricoAcademico.objects.get(aluno=self.aluno)
+        caminho_pdf_novo = historico_atualizado.historico_pdf.path
+        self.assertTrue(os.path.isfile(caminho_pdf_novo))
+        disciplinas_novas = Disciplina.objects.filter(historico=historico_atualizado)
+        self.assertNotEqual(list(disciplinas_anteriores), list(disciplinas_novas))
+
+    def test_upload_historico_aluno_nao_existe(self):
+        with open(self.pdf_path, 'rb') as pdf_file:
+            response = self.client.post(
+                self.url_upload,
+                data={'aluno': '999999999', 'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
+                format='multipart'
+            )
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_upload_pdf_vazio(self):
+        empty_pdf = SimpleUploadedFile('historico.pdf', b'')
+        response = self.client.post(
+            self.url_upload,
+            data={'aluno': self.aluno.matricula, 'historico_pdf': empty_pdf},
+            format='multipart'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_historico_removes_pdf(self):
+        self.test_upload_historico()
+        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        pdf_file_path = historico.historico_pdf.path
+        self.assertTrue(os.path.isfile(pdf_file_path))
+        historico.delete()
+        self.assertFalse(os.path.isfile(pdf_file_path))
+        self.assertEqual(HistoricoAcademico.objects.filter(aluno=self.aluno).count(), 0)
+        self.assertEqual(Disciplina.objects.filter(historico__aluno=self.aluno).count(), 0)
+
+    def test_visualizar_historico_com_aluno(self):
+        self.client.force_authenticate(user=self.usuario)
+        self.test_upload_historico()
         response = self.client.get(self.url_visualizar)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('Content-Disposition', response)
+        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico.delete()
 
-    def test_aluno_visualizar_historico_aluno_nao_existe(self):
+    def test_visualizar_historico_com_professor(self):
+        professor_usuario = User.objects.create_user(
+            username='professor@universidade.com',
+            email='professor@universidade.com',
+            password='senhaSegura'
+        )
+        Professor.objects.create(
+            user=professor_usuario,
+            nome='Professor',
+            email='professor@universidade.com'
+        )
+        self.test_upload_historico()
+
+        self.client.force_authenticate(user=professor_usuario)
+        response = self.client.get(self.url_visualizar)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('Content-Disposition', response)
+        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico.delete()
+
+    def test_visualizar_historico_outro_aluno(self):
+        outro_usuario = User.objects.create_user(
+            username='outro.aluno@example.com',
+            email='outro.aluno@example.com',
+            password='senhaSegura'
+        )
+        Aluno.objects.create(
+            matricula="987654321",
+            nome="Outro Aluno",
+            email="outro.aluno@example.com",
+            curriculo="Link do curriculo",
+            github="https://github.com/outroaluno",
+            linkedin="https://linkedin.com/in/outroaluno",
+            cra=8.5,
+            user=outro_usuario
+        )
+        self.client.force_authenticate(user=outro_usuario)
+        response = self.client.get(self.url_visualizar)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_visualizar_historico_aluno_nao_existe(self):
         url = reverse('visualizar_historico', kwargs={'matricula': '999999999'})
+        self.client.force_authenticate(user=self.usuario)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_aluno_visualizar_historico_sem_historico(self):
+    def test_visualizar_historico_sem_historico(self):
+        HistoricoAcademico.objects.filter(aluno=self.aluno).delete()
+        self.client.force_authenticate(user=self.usuario)
         response = self.client.get(self.url_visualizar)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_aluno_verificar_dados_processados(self):
-        self.test_aluno_upload_historico()
+    def test_verificar_dados_processados(self):
+        self.test_upload_historico()
         historico = HistoricoAcademico.objects.get(aluno=self.aluno)
 
         self.assertIsNotNone(historico.cra)
@@ -269,73 +376,118 @@ class HistoricoAcademicoTestCase(APITestCase):
         disciplinas = Disciplina.objects.filter(historico=historico)
         self.assertGreater(len(disciplinas), 0)
 
-
-class LoginAlunoViewTestCase(APITestCase):
+        
+class InteresseNoProjetoTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse('login_aluno')
-        usuario = User.objects.create_user(
-            username='andre@example.com',
-            email='andre@example.com',
-            password='1234'
-        )
-        self.aluno = Aluno.objects.create(
-            matricula='121210210',
-            nome='Andre Souza',
-            email='andre@example.com',
-            user=usuario
-        )
-        self.login = {
-            "email" : "andre@example.com",
-            "senha" : "1234"
-        }
+        self.user = User.objects.create_user(username='aluno@teste.com', password='senha123')
+        self.aluno = Aluno.objects.create(user=self.user, matricula='123456789', nome='Aluno Teste', email='aluno@teste.com')
+        self.userP = User.objects.create_user(username='professor@teste.com', password='senha123')
+        self.professor = Professor.objects.create(user=self.userP, nome='Professor Teste', email='professor@teste.com')
+        
+        self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor)
 
-    def test_aluno_login_com_sucesso(self):
-        response = self.client.post(self.url, self.login, format='json')
+        self.url = reverse('interessar_no_projeto', args=[self.projeto.id_projeto])
+        self.client.force_authenticate(user=self.user)  
+
+    def test_interesse_no_projeto_sucesso(self):
+        response = self.client.post(self.url, {'projeto_id': self.projeto.id_projeto}, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Associacao.objects.count(), 1)
+        self.assertEqual(Associacao.objects.first().aluno, self.aluno)
+        self.assertEqual(Associacao.objects.first().projeto, self.projeto)
+        
+    def test_interesse_no_projeto_projeto_nao_existe(self):
+        url = reverse('interessar_no_projeto', args=[9999]) 
+        response = self.client.post(url, {'projeto_id': 9999}, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Projeto não encontrado.')
+        self.assertEqual(Associacao.objects.count(), 0)
+    
+    def test_interesse_no_projeto_associacao_ja_existe(self):
+        Associacao.objects.create(aluno=self.aluno, projeto=self.projeto)
+        
+        url = reverse('interessar_no_projeto', args=[self.projeto.id_projeto])
+        response = self.client.post(url, {'projeto_id': self.projeto.id_projeto}, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Aluno já está associado a este projeto.')
+        self.assertEqual(Associacao.objects.count(), 1) 
+        
+    def test_interesse_no_projeto_aluno_negado(self):
+        self.client.force_authenticate(user=self.professor.user)
+    
+        url = reverse('interessar_no_projeto', args=[self.projeto.id_projeto])
+        response = self.client.post(url, {'projeto_id': self.projeto.id_projeto}, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'Acesso negado. Apenas alunos podem se associar a projetos.')
+        self.assertEqual(Associacao.objects.count(), 0)
+    
+    def test_associacao_deletada_quando_aluno_e_deletado(self):
+        Associacao.objects.create(aluno=self.aluno, projeto=self.projeto)
+
+        self.assertEqual(Associacao.objects.count(), 1)
+        
+        self.aluno.delete()
+
+        self.assertEqual(Associacao.objects.count(), 0)
+
+    def test_associacao_deletada_quando_projeto_e_deletado(self):
+        Associacao.objects.create(aluno=self.aluno, projeto=self.projeto)
+
+        self.assertEqual(Associacao.objects.count(), 1)
+        
+        self.projeto.delete()
+
+        self.assertEqual(Associacao.objects.count(), 0)
+        
+class DeleteInteressarNoProjetoTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='beatriz@teste.com', password='senha123')
+        self.aluno = Aluno.objects.create(user=self.user, matricula='987654321', nome='Beatriz', email='beatriz@teste.com')
+        self.userP = User.objects.create_user(username='joseane@teste.com', password='senha123')
+        self.professor = Professor.objects.create(user=self.userP, nome='Joseane', email='joseane@teste.com')
+
+        self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor)
+
+        self.associacao = Associacao.objects.create(aluno=self.aluno, projeto=self.projeto)
+
+        self.url = reverse('retirar_interesse_no_projeto', args=[self.projeto.id_projeto])
+        self.client.force_authenticate(user=self.user)
+
+    def test_delete_interesse_no_projeto_sucesso(self):
+        response = self.client.delete(self.url)
+        
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('refresh', response.data)
-        self.assertIn('access', response.data)
-        self.assertNotEqual(response.data['refresh'], '')
-        self.assertNotEqual(response.data['access'], '')
+        self.assertEqual(response.data['detail'], 'Associação deletada com sucesso.')
+        self.assertEqual(Associacao.objects.count(), 0)
+
+    def test_delete_interesse_no_projeto_projeto_nao_existe(self):
+        url = reverse('retirar_interesse_no_projeto', args=[9999])
+        response = self.client.delete(url)
         
-    def test_aluno_login_com_email_vazio(self):
-        invalid_data = {
-            "email": "",
-            "senha": "1234"
-        }
-        response = self.client.post(self.url, invalid_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn('detail', response.data)
-        self.assertEqual(response.data['detail'], 'Aluno não encontrado.')
+        self.assertEqual(response.data['detail'], 'Projeto não encontrado.')
+        self.assertEqual(Associacao.objects.count(), 1)
 
-    def test_login_aluno_com_senha_vazia(self):
-        invalid_data = {
-            "email": "andre@example.com",
-            "senha": ""
-        }
-        response = self.client.post(self.url, invalid_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn('detail', response.data)
-        self.assertEqual(response.data['detail'], 'Senha incorreta.')
-
+    def test_delete_interesse_no_projeto_associacao_nao_existe(self):
+        Associacao.objects.filter(aluno=self.aluno, projeto=self.projeto).delete()
         
-    def test_login_aluno_inexistente(self):
-        invalid_data = {
-            "email": "joao.silva@example.com",
-            "senha": "senha123"
-        }
-        response = self.client.post(self.url, invalid_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn('detail', response.data)
-        self.assertEqual(response.data['detail'], 'Aluno não encontrado.')
+        response = self.client.delete(self.url)
         
-    def test_login_aluno_senha_incorreta(self):
-        invalid_data = {
-            "email": "andre@example.com",
-            "senha": "12345"
-        }
-        response = self.client.post(self.url, invalid_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Aluno não está associado a este projeto.')
+        self.assertEqual(Associacao.objects.count(), 0)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn('detail', response.data)
-        self.assertEqual(response.data['detail'], 'Senha incorreta.')
+    def test_delete_interesse_no_projeto_aluno_negado(self):
+        self.client.force_authenticate(user=self.professor.user)
+    
+        response = self.client.delete(self.url)
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'Acesso negado. Apenas alunos podem se associar a projetos.')
+        self.assertEqual(Associacao.objects.count(), 1)

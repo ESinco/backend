@@ -43,9 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'backend',
     'api_aluno',
     'api_professor',
     'api_projeto',
+    'api_rest',
     'pdfplumber',
     'rest_framework_simplejwt',
     'pytz'
@@ -141,10 +143,11 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'pt-br'
 
 TIME_ZONE = 'America/Fortaleza'
-
 USE_I18N = True
-
 USE_TZ = False
+
+FILE_CHARSET = 'utf-8'
+DEFAULT_CHARSET = 'utf-8'
 
 
 # Static files (CSS, JavaScript, Images)
@@ -162,3 +165,6 @@ CORS_ORIGIN_ALLOW_ALL = True
 #CORS_ALLOWED_ORIGINS = [
 #    'http://localhost:8000',
 #]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
