@@ -7,8 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from api_aluno.views import *
 from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
 from api_professor.models import Professor
-
 from api_projeto.models import Projeto
+from api_rest.models import *
 
 import os
 
@@ -525,3 +525,140 @@ class DeleteInteressarNoProjetoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'Acesso negado. Apenas alunos podem se associar a projetos.')
         self.assertEqual(Associacao.objects.count(), 1)
+
+class AlunoUpdateTests(APITestCase):
+    def setUp(self):
+        self.usuario = User.objects.create_user(
+            username='joao.silva@example.com',
+            email='joao.silva@example.com',
+            password='senhaSegura'
+        )  
+        self.aluno = Aluno.objects.create(
+            matricula="123456789",
+            nome="João da Silva",
+            email="joao.silva@example.com",
+            curriculo="Link do curriculo",
+            github="https://github.com/joaosilva",
+            linkedin="https://linkedin.com/in/joaosilva",
+            cra=9.3,
+            user=self.usuario
+        )
+        self.url_editar = reverse('editar_perfil_aluno')
+        self.client.force_authenticate(user=self.usuario)
+
+        self.habilidade = Habilidade.objects.create(nome='Programação', grupo='Hard Skills')
+        self.experiencia = Experiencia.objects.create(nome='Gestão de Projetos', grupo='Experiências')
+        self.interesse = Interesse.objects.create(nome='Inteligência Artificial', grupo='Interesses')
+        self.habilidade_nova1 = Habilidade.objects.create(nome='Banco de Dados', grupo='Hard Skills')
+        self.habilidade_nova2 = Habilidade.objects.create(nome='Proatividade', grupo='Soft Skills')
+        self.experiencia_nova1 = Experiencia.objects.create(nome='Migração de Sistemas', grupo='Experiências')
+        self.experiencia_nova2 = Experiencia.objects.create(nome='APIs', grupo='Experiências')
+        self.interesse_novo1 = Interesse.objects.create(nome='Cybersegurança', grupo='Interesses')
+        self.interesse_novo2 = Interesse.objects.create(nome='Análise de Dados', grupo='Interesses')
+
+        self.aluno.habilidades.add(self.habilidade)
+        self.aluno.experiencias.add(self.experiencia)
+        self.aluno.interesses.add(self.interesse)
+
+        self.data = {
+            'nome': 'Novo Nome', 
+            'curriculo': 'Novo Currículo', 
+            'email': 'newtestuser@example.com',
+            'github': 'https://github.com/new', 
+            'linkedin': 'https://linkedin.com/in/new', 
+            'habilidades': [{"nome": self.habilidade_nova1.nome, "grupo": self.habilidade_nova1.grupo}, 
+                            {"nome": self.habilidade_nova2.nome, "grupo": self.habilidade_nova2.grupo}], 
+            'experiencias': [{"nome": self.experiencia_nova1.nome, "grupo": self.experiencia_nova1.grupo}, 
+                             {"nome" : self.experiencia_nova2.nome, "grupo" : self.experiencia_nova2.grupo}], 
+            'interesses': [{"nome": self.interesse_novo1.nome, "grupo": self.interesse_novo1.grupo}, 
+                           {"nome": self.interesse_novo2.nome, "grupo": self.interesse_novo2.grupo}]        
+            }
+        
+    def test_editar_aluno_todas_as_informacoes(self):
+        nome_antigo = self.aluno.nome
+        email_antigo = self.aluno.email
+        curriculo_antigo = self.aluno.curriculo
+        github_antigo = self.aluno.github
+        linkedin_antigo = self.aluno.linkedin
+
+        habilidades_antigas = list(self.aluno.habilidades.all())
+        experiencias_antigas = list(self.aluno.experiencias.all())
+        interesses_antigos = list(self.aluno.interesses.all())
+
+        response = self.client.put(self.url_editar, self.data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.aluno.refresh_from_db()
+
+        self.assertNotEqual(self.aluno.nome, nome_antigo)
+        self.assertNotEqual(self.aluno.email, email_antigo)
+        self.assertNotEqual(self.aluno.curriculo, curriculo_antigo)
+        self.assertNotEqual(self.aluno.github, github_antigo)
+        self.assertNotEqual(self.aluno.linkedin, linkedin_antigo)
+
+        self.assertEqual(self.aluno.nome, 'Novo Nome')
+        self.assertEqual(self.aluno.email, 'newtestuser@example.com')
+        self.assertEqual(self.aluno.curriculo, 'Novo Currículo')
+        self.assertEqual(self.aluno.github, 'https://github.com/new')
+        self.assertEqual(self.aluno.linkedin, 'https://linkedin.com/in/new')
+
+        habilidades_novas = list(self.aluno.habilidades.all())
+        experiencias_novas = list(self.aluno.experiencias.all())
+        interesses_novos = list(self.aluno.interesses.all())
+
+        self.assertNotEqual(habilidades_novas, habilidades_antigas)
+        self.assertNotEqual(experiencias_novas, experiencias_antigas)
+        self.assertNotEqual(interesses_novos, interesses_antigos)
+    
+    def test_editar_aluno_informacoes_especificas(self):
+        nome_antigo = self.aluno.nome
+        email_antigo = self.aluno.email
+        curriculo_antigo = self.aluno.curriculo
+        github_antigo = self.aluno.github
+        linkedin_antigo = self.aluno.linkedin
+
+        habilidades_antigas = list(self.aluno.habilidades.all())
+        experiencias_antigas = list(self.aluno.experiencias.all())
+        interesses_antigos = list(self.aluno.interesses.all())
+
+        self.data['nome'] = self.aluno.nome
+        self.data['email'] = self.aluno.email
+        self.data['habilidades'] = [{"nome": self.habilidade.nome, "grupo": self.habilidade.grupo}] 
+        self.data['experiencias'] = [{"nome": self.experiencia.nome, "grupo": self.experiencia.grupo}] 
+
+        response = self.client.put(self.url_editar, self.data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.aluno.refresh_from_db()
+
+        self.assertEqual(self.aluno.nome, nome_antigo)
+        self.assertEqual(self.aluno.email, email_antigo)
+        self.assertNotEqual(self.aluno.curriculo, curriculo_antigo)
+        self.assertNotEqual(self.aluno.github, github_antigo)
+        self.assertNotEqual(self.aluno.linkedin, linkedin_antigo)
+
+        self.assertEqual(self.aluno.nome, 'João da Silva')
+        self.assertEqual(self.aluno.email, 'joao.silva@example.com')
+        self.assertEqual(self.aluno.curriculo, 'Novo Currículo')
+        self.assertEqual(self.aluno.github, 'https://github.com/new')
+        self.assertEqual(self.aluno.linkedin, 'https://linkedin.com/in/new')
+        
+        habilidades_novas = list(self.aluno.habilidades.all())
+        experiencias_novas = list(self.aluno.experiencias.all())
+        interesses_novos = list(self.aluno.interesses.all())
+
+        self.assertEqual(habilidades_novas, habilidades_antigas)
+        self.assertEqual(experiencias_novas, experiencias_antigas)
+        self.assertNotEqual(interesses_novos, interesses_antigos)
+
+    def test_editar_aluno_nao_existe(self):
+        outro_usuario = User.objects.create_user(
+            username='testuser@example.com',
+            email='testuser@example.com',
+            password='senhaSegura'
+        )
+        self.client.force_authenticate(user=outro_usuario)
+        self.aluno.delete()
+
+        response = self.client.put(self.url_editar, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
