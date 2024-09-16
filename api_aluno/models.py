@@ -4,7 +4,7 @@ import os
 
 from api_professor.models import Professor
 from api_rest.models import Habilidade, Experiencia, Interesse, Feedback
-
+from api_rest.models import Disciplina
 
 class Aluno(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
@@ -30,7 +30,7 @@ class Aluno(models.Model):
         
 class Disciplina_Matriculada(models.Model):
     historico = models.ForeignKey('Historico_Academico', related_name='disciplinas_matriculadas', on_delete=models.CASCADE)
-    codigo = models.CharField(max_length=20)
+    disciplina = models.ForeignKey(Disciplina, related_name='disciplina', null=False, on_delete=models.CASCADE)
     tipo = models.CharField(max_length=50)
     media = models.FloatField(null=True, blank=True)
     situacao = models.CharField(max_length=50)

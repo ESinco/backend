@@ -1,6 +1,6 @@
 import pdfplumber
 from .models import Disciplina_Matriculada
-
+from api_rest.models import Disciplina
 
 def extrair_disciplinas_do_pdf(historico_academico):
     pdf_path = historico_academico.historico_pdf.path
@@ -66,9 +66,10 @@ def extrair_disciplinas_do_pdf(historico_academico):
 
                         i += 1
 
+                    disciplina = Disciplina.objects.get(pk=codigo)
                     disciplina_matriculada = Disciplina_Matriculada(
                         historico=historico_academico,
-                        codigo=codigo,
+                        disciplina=disciplina,
                         tipo=tipo,
                         media=media,
                         situacao=situacao,
