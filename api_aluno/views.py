@@ -13,6 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 import os
 
 from .utils import extrair_disciplinas_do_pdf
+from api_rest.utils import atualizar_disciplinas
 from .models import *
 from .serializers import *
 from api_projeto.models import Projeto, Associacao
@@ -74,8 +75,10 @@ def upload_historico(request):
             aluno=aluno,
             historico_pdf=historico_pdf
         )
-
+        
+        atualizar_disciplinas()
         extrair_disciplinas_do_pdf(novo_historico)
+        
         return Response(status=status.HTTP_200_OK)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
