@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'api_rest',
     'pdfplumber',
     'rest_framework_simplejwt',
-    'pytz'
+    'pytz',
+    'requests'
 ]
 
 REST_FRAMEWORK = {
