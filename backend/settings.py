@@ -43,11 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'api_rest',
     'backend',
     'api_aluno',
     'api_professor',
     'api_projeto',
+    'api_rest',
     'pdfplumber',
     'rest_framework_simplejwt',
     'pytz'
@@ -112,7 +112,7 @@ DATABASES = {
         'NAME': 'ProjetIn-db',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': '172.18.0.1',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }
@@ -165,3 +165,6 @@ CORS_ORIGIN_ALLOW_ALL = True
 #CORS_ALLOWED_ORIGINS = [
 #    'http://localhost:8000',
 #]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+import os
+
 from api_professor.models import Professor
 from api_rest.models import *
 
@@ -42,8 +44,19 @@ class Disciplina(models.Model):
         return f"{self.nome} - {self.media}"
         
 class HistoricoAcademico(models.Model):
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, related_name='historicos')
+    historico_pdf = models.FileField(upload_to='historicos/')
     cra = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['aluno'], name='unique_historico_por_aluno')
+        ]
+    
+    def delete(self, *args, **kwargs):
+        if self.historico_pdf and os.path.isfile(self.historico_pdf.path):
+            os.remove(self.historico_pdf.path)
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"Histórico de {self.aluno.nome}"

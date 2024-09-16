@@ -48,31 +48,6 @@ def get_by_id_professor(request, id_professor):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['POST'])
-def login_professor(request):
-    email = request.data.get('email')
-    senha = request.data.get('senha')
-
-    try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({"detail": "Professor não encontrado."}, status=404)
-
-    try:
-        professor = Professor.objects.get(user=user)
-    except Professor.DoesNotExist:
-        return Response({"detail": "Professor não encontrado."}, status=404)
-
-    if not user.check_password(senha):
-        return Response({"detail": "Senha incorreta."}, status=401)
-
-    refresh = RefreshToken.for_user(user)
-    response = ProfessorSerializer(professor).data
-    response['refresh'] = str(refresh)
-    response['access'] = str(refresh.access_token)
-
-    return Response(response)
-
-@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def criar_avaliacao(request, id_aluno):
     try:
