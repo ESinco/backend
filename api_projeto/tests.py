@@ -80,10 +80,12 @@ class CriarProjetoViewTestCase(APITestCase):
             "descricao": "Descrição do projeto teste",
             "laboratorio": "Dono Teste",
             "vagas": 5,
+            "habilidades": ["Programação"]
         }
 
         refresh = RefreshToken.for_user(usuario)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.habilidade = Habilidade.objects.create(nome='Programação', grupo='Hard Skills')
         
     def test_criar_projeto_sucesso(self):
         response = self.client.post(self.url, self.projeto_data, format='json')
@@ -92,6 +94,7 @@ class CriarProjetoViewTestCase(APITestCase):
         self.assertEqual(response.data['responsavel']['id'], self.professor.id)
         self.assertEqual(response.data['responsavel']['nome'], self.professor.nome)
         self.assertEqual(response.data['responsavel']['email'], self.professor.email)
+        self.assertEqual
 
 
     def test_criar_projeto_nome_vazio(self):
