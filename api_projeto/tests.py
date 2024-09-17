@@ -13,8 +13,7 @@ from datetime import datetime
 
 from api_projeto.models import Projeto, Associacao, Colaborador
 from api_professor.models import Professor
-from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
-from api_rest.models import Habilidade, Experiencia, Interesse
+from api_aluno.models import Aluno
 from api_projeto.views import *
 
 from io import StringIO
