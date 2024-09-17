@@ -160,3 +160,6 @@ cython_debug/
 # IDE's
 .idea/
 .vscode/
+
+# Históricos
+media/historicos
