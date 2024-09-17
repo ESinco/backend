@@ -94,7 +94,14 @@ def get_projetos(request):
     if request.method == 'GET':
         projetos = Projeto.objects.all()
         serializer = ProjetoSerializer(projetos, many=True)
-        return Response(serializer.data)
+        data = serializer.data
+        resultados = [{
+                **item,
+                'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count()
+            }
+            for item in data
+        ]
+        return Response(resultados)
 
 @api_view(['GET'])
 def get_by_id_projeto(request, id_projeto):
@@ -102,7 +109,9 @@ def get_by_id_projeto(request, id_projeto):
         try:
             projeto = Projeto.objects.get(pk=id_projeto)
             serializer = ProjetoSerializer(projeto)
-            return Response(serializer.data)
+            data = serializer.data
+            data['quantidade_de_inscritos'] = Associacao.objects.filter(projeto=projeto).count()
+            return Response(data)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -118,7 +127,14 @@ def get_all_projetos_by_professor(request):
         try:
             projetos = Projeto.objects.filter(responsavel=responsavel)
             serializer = ProjetoSerializer(projetos, many=True)
-            return Response(serializer.data)
+            data = serializer.data
+            resultados = [{
+                    **item,
+                'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count()
+                }
+                for item in data
+            ]
+            return Response(resultados)
         except Projeto.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -176,3 +192,95 @@ def editar_projeto(request, id_projeto):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def salvar_filtragem(request):
+    if request.method == 'POST':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem cadastrar listas."}, status=status.HTTP_403_FORBIDDEN)
+        
+        entradas = ListaFiltragemPostSerializer(data=request.data)
+        if not entradas.is_valid():
+            return Response(entradas.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        id_projeto = entradas.data['id_projeto']
+        projeto = Projeto.objects.get(pk=id_projeto)
+        if not projeto.responsavel.id == professor.id:
+            return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem criar filtros."}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = entradas.data.copy()
+        data['id_professor'] = professor.id
+        serializer = ListaFiltragemSemIdSerializer(data=data)
+        if serializer.is_valid():
+            lista_filtros = serializer.save()
+            response_serializer = ListaFiltragemSerializer(lista_filtros)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def editar_filtragem(request, id_lista):
+    if request.method == 'PUT':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem cadastrar listas."}, status=status.HTTP_403_FORBIDDEN)
+        
+        entradas = ListaFiltragemPutSerializer(data=request.data)
+        if not entradas.is_valid():
+            return Response(entradas.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            lista = Lista_Filtragem.objects.get(pk=id_lista)
+        except Lista_Filtragem.DoesNotExist:
+            return Response({"detail": "Lista não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not lista.id_professor.id == professor.id:
+            return Response({"detail": "Apenas o dono da lista pode alterá-la."}, status=status.HTTP_400_BAD_REQUEST)
+
+        lista.titulo = entradas.data['titulo']
+        lista.filtro_habilidades.set(entradas.data.get('filtro_habilidades', lista.filtro_habilidades.all()))
+        lista.filtro_experiencias.set(entradas.data.get('filtro_experiencias', lista.filtro_experiencias.all()))
+        lista.filtro_interesses.set(entradas.data.get('filtro_interesses', lista.filtro_interesses.all()))
+        lista.filtro_cra = entradas.data.get('filtro_cra', lista.filtro_cra)
+        lista.filtro_disciplinas = entradas.data.get('filtro_disciplinas', lista.filtro_disciplinas)
+
+        lista.save()
+        response_serializer = ListaFiltragemSerializer(lista)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cadastrar_colaborador(request, id_projeto, email_colaborador):
+    try:
+        professor = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        projeto = Projeto.objects.get(pk=id_projeto)
+    except:
+        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+    
+    if(projeto.responsavel.id != professor.id):
+        return Response({"detail": "Acesso negado. Apenas o responsavel do projeto pode cadastrar um colaborador."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        colaborador = Professor.objects.get(email=email_colaborador)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Professor colaborador não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+    
+    associacao, criado = Colaborador.objects.get_or_create(professor_id=colaborador.id, projeto_id=id_projeto)
+
+    if criado:
+        return Response({"detail": "Associação criada com sucesso."}, status=status.HTTP_201_CREATED)
+    else:
+        return Response({"detail": "Professor ja é colaborador desse projeto."}, status=status.HTTP_400_BAD_REQUEST)

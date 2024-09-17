@@ -9,7 +9,7 @@ from .models import *
 from api_professor.serializers import ProfessorSerializer
 from api_professor.models import Professor
 from api_aluno.models import Aluno
-from api_aluno.serializers import AlunoLoginSerializer
+from api_aluno.serializers import AlunoInformacoesSerializer
 from rest_framework import status
 
 from .serializers import *
@@ -25,7 +25,7 @@ def login(request):
     try:
         usuario = User.objects.get(email=email)
     except User.DoesNotExist:
-        return Response({"detail": "Professor não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
     if not usuario.check_password(senha):
         return Response({"detail": "Senha incorreta."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -39,7 +39,7 @@ def login(request):
         try:
             aluno = Aluno.objects.get(user=usuario)
             isTeacher = False
-            response = AlunoLoginSerializer(aluno).data
+            response = AlunoInformacoesSerializer(aluno).data
         except Aluno.DoesNotExist:
             return Response({"detail": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
     

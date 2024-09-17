@@ -13,6 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 import os
 
 from .utils import extrair_disciplinas_do_pdf
+from api_rest.utils import atualizar_disciplinas
 from .models import *
 from .serializers import *
 from api_projeto.models import Projeto, Associacao
@@ -101,16 +102,18 @@ def upload_historico(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     try:
-        historico_antigo = HistoricoAcademico.objects.filter(aluno=aluno).first()
+        historico_antigo = Historico_Academico.objects.filter(aluno=aluno).first()
         if historico_antigo:
             historico_antigo.delete()
 
-        novo_historico = HistoricoAcademico.objects.create(
+        novo_historico = Historico_Academico.objects.create(
             aluno=aluno,
             historico_pdf=historico_pdf
         )
-
+        
+        atualizar_disciplinas()
         extrair_disciplinas_do_pdf(novo_historico)
+        
         return Response(status=status.HTTP_200_OK)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -125,7 +128,7 @@ def visualizar_historico(request, matricula):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         try:
-            historico = HistoricoAcademico.objects.get(aluno=aluno)
+            historico = Historico_Academico.objects.get(aluno=aluno)
             if not historico.historico_pdf:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -139,7 +142,7 @@ def visualizar_historico(request, matricula):
             except FileNotFoundError:
                 return Response(status=status.HTTP_404_NOT_FOUND)
                 
-        except HistoricoAcademico.DoesNotExist:
+        except Historico_Academico.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     except Aluno.DoesNotExist:

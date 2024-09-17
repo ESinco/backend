@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'api_rest',
     'pdfplumber',
     'rest_framework_simplejwt',
-    'pytz'
+    'pytz',
+    'requests'
 ]
 
 REST_FRAMEWORK = {
@@ -109,9 +110,9 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ProjetIn-db',
+        'NAME': 'postgres',
         'USER': 'postgres',
-        'PASSWORD': 'postgres',
+        'PASSWORD': 'admin',
         'HOST': 'localhost',
         'PORT': '5432',
     }

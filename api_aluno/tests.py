@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from api_aluno.views import *
-from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
+from api_aluno.models import Aluno, Historico_Academico, Disciplina_Matriculada
 from api_professor.models import Professor
 from api_projeto.models import Projeto
 from api_rest.models import *
@@ -13,12 +13,10 @@ from api_rest.models import *
 import os
 
 
-#Models
-# Testando model de ALuno.
-class AlunoModelTest(TestCase):
+class AlunoModelTestCase(TestCase):
 
     def setUp(self):
-        usuario = User.objects.create_user(
+        self.usuario = User.objects.create_user(
             username='andre@example.com',
             email='andre@example.com',
             password='1234'
@@ -27,32 +25,29 @@ class AlunoModelTest(TestCase):
             matricula='121210210',
             nome='Andre Souza',
             email='andre@example.com',
-            user=usuario
+            user=self.usuario
         )
 
     def test_aluno_creation(self):
-        #Asserts
-        self.assertIsInstance(self.aluno, Aluno)
         self.assertEqual(self.aluno.matricula, '121210210')
         self.assertEqual(self.aluno.nome, 'Andre Souza')
         self.assertEqual(self.aluno.email, 'andre@example.com')
         self.assertTrue(self.aluno.user.check_password('1234'))
+        self.assertIsInstance(self.aluno, Aluno)
 
     def test_aluno_str(self):
-        expected_str = (f'matricula: 121210210\n'
-                        f'nome: Andre Souza\n'
-                        f'email: andre@example.com\n'
-                        f'curriculo: None\n'
-                        f'github: None\n'
-                        f'linkedin: None\n'
-                        f'cra: None')
-                
-        #Asserts
+        expected_str = (
+            'matricula: 121210210\n'
+            'nome: Andre Souza\n'
+            'email: andre@example.com\n'
+            'curriculo: None\n'
+            'github: None\n'
+            'linkedin: None'
+        )
         self.assertEqual(str(self.aluno), expected_str)
 
-#Views
-# Testando POST de alunoes
-class CriarAlunoViewTest(APITestCase):
+
+class CriarAlunoViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('criar_aluno')
@@ -65,8 +60,7 @@ class CriarAlunoViewTest(APITestCase):
 
     def test_criar_aluno_sucesso(self):
         response = self.client.post(self.url, self.aluno_data, format='json')
-        
-        #Asserts
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['matricula'], self.aluno_data['matricula'])
         self.assertEqual(response.data['nome'], self.aluno_data['nome'])
@@ -80,8 +74,6 @@ class CriarAlunoViewTest(APITestCase):
         }
         response = self.client.post(self.url, invalid_data, format='json')
         self.assertIn('nome', response.data)
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('nome', response.data)
 
@@ -93,8 +85,6 @@ class CriarAlunoViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('matricula', response.data)
         
@@ -107,8 +97,6 @@ class CriarAlunoViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
         
@@ -121,8 +109,6 @@ class CriarAlunoViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_criar_aluno_com_email_vazio(self):
@@ -132,8 +118,6 @@ class CriarAlunoViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
 
@@ -144,36 +128,25 @@ class CriarAlunoViewTest(APITestCase):
             "email": "joao.silva@example.com"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('senha', response.data)
 
-# Testando GET de todos os alunos.
-class getAllAlunoViewTest(APITestCase):
+
+class getAllAlunoViewTestCase(APITestCase):
     
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('get_all_alunos')
-        usuario = User.objects.create_user(
-            username='andre@example.com',
-            email='andre@example.com',
-            password='213'
-        )        
-        Aluno.objects.create(matricula = "121210110", nome="Andre", email="andre@example.com", user=usuario)
-        usuario = User.objects.create_user(
-            username='rian@example.com',
-            email='rian@example.com',
-            password='213'
-        )
-        Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", user=usuario)
-        usuario = User.objects.create_user(
-            username='luana@example.com',
-            email='luana@example.com',
-            password='213'
-        )
-        Aluno.objects.create(matricula = "121210310", nome="Luana", email="luana@example.com", user=usuario)
-        
+        usuarios = [
+            User.objects.create_user(username='andre@example.com', email='andre@example.com', password='213'),
+            User.objects.create_user(username='rian@example.com', email='rian@example.com', password='213'),
+            User.objects.create_user(username='luana@example.com', email='luana@example.com', password='213')
+        ]
+        alunos = [
+            Aluno.objects.create(matricula="121210110", nome="Andre", email="andre@example.com", user=usuarios[0]),
+            Aluno.objects.create(matricula="121210210", nome="Rian", email="rian@example.com", user=usuarios[1]),
+            Aluno.objects.create(matricula="121210310", nome="Luana", email="luana@example.com", user=usuarios[2])
+        ]
     def test_get_all_alunos_sucesso(self):
         response = self.client.get(self.url, format='json')
         nomes_alunos = [aluno['nome'] for aluno in response.data]
@@ -189,13 +162,11 @@ class getAllAlunoViewTest(APITestCase):
         Aluno.objects.all().delete()
         
         response = self.client.get(self.url, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
         
-# Testando GET de pegar Aluno por matricula.
-class getAlunoPorMatriculaTest(APITestCase):
+
+class getAlunoPorMatriculaTestCase(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -212,31 +183,25 @@ class getAlunoPorMatriculaTest(APITestCase):
         )
         self.aluno2 = Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", user=usuario)
 
-    def test_get_Aluno_by_matricula_sucesso1(self):
+    def test_get_aluno_by_matricula_sucesso1(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': self.aluno1.matricula})
         response = self.client.get(url)
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['nome'], self.aluno1.nome)
         self.assertEqual(response.data['email'], self.aluno1.email)
         
         
-    def test_get_Aluno_by_matricula_sucesso2(self):
+    def test_get_aluno_by_matricula_sucesso2(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': self.aluno1.matricula})
         response = self.client.get(url)
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['matricula'], self.aluno1.matricula)
 
-    def test_get_Aluno_by_matricula_inexistente(self):
+    def test_get_aluno_by_matricula_inexistente(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': 999999999})
         response = self.client.get(url)
-        
-        #Asserts
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 class HistoricoAcademicoTests(APITestCase):
     @classmethod
@@ -253,7 +218,6 @@ class HistoricoAcademicoTests(APITestCase):
             curriculo="Link do curriculo",
             github="https://github.com/joaosilva",
             linkedin="https://linkedin.com/in/joaosilva",
-            cra=9.3,
             user=cls.usuario
         )
         cls.url_upload = reverse('upload_historico')
@@ -272,12 +236,12 @@ class HistoricoAcademicoTests(APITestCase):
                 format='multipart'
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+            historico = Historico_Academico.objects.get(aluno=self.aluno)
             self.assertIsNotNone(historico)
             self.assertTrue(os.path.isfile(historico.historico_pdf.path))
             self.assertIsNotNone(historico.cra)
-            disciplinas = Disciplina.objects.filter(historico=historico)
-            self.assertGreater(len(disciplinas), 0)
+            disciplinas_matriculadas = Disciplina_Matriculada.objects.filter(historico=historico)
+            self.assertGreater(len(disciplinas_matriculadas), 0)
 
     def test_upload_novo_historico_apaga_antigo(self):
         with open(self.pdf_path, 'rb') as pdf_file:
@@ -288,9 +252,9 @@ class HistoricoAcademicoTests(APITestCase):
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
         caminho_pdf_antigo = historico.historico_pdf.path
-        disciplinas_anteriores = Disciplina.objects.filter(historico=historico)
+        disciplinas_anteriores = Disciplina_Matriculada.objects.filter(historico=historico)
         self.assertTrue(os.path.isfile(caminho_pdf_antigo))
         self.assertGreater(len(disciplinas_anteriores), 0)
 
@@ -303,10 +267,10 @@ class HistoricoAcademicoTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertFalse(os.path.isfile(caminho_pdf_antigo))
-        historico_atualizado = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico_atualizado = Historico_Academico.objects.get(aluno=self.aluno)
         caminho_pdf_novo = historico_atualizado.historico_pdf.path
         self.assertTrue(os.path.isfile(caminho_pdf_novo))
-        disciplinas_novas = Disciplina.objects.filter(historico=historico_atualizado)
+        disciplinas_novas = Disciplina_Matriculada.objects.filter(historico=historico_atualizado)
         self.assertNotEqual(list(disciplinas_anteriores), list(disciplinas_novas))
 
     def test_upload_historico_aluno_nao_existe(self):
@@ -329,13 +293,13 @@ class HistoricoAcademicoTests(APITestCase):
 
     def test_delete_historico_removes_pdf(self):
         self.test_upload_historico()
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
         pdf_file_path = historico.historico_pdf.path
         self.assertTrue(os.path.isfile(pdf_file_path))
         historico.delete()
         self.assertFalse(os.path.isfile(pdf_file_path))
-        self.assertEqual(HistoricoAcademico.objects.filter(aluno=self.aluno).count(), 0)
-        self.assertEqual(Disciplina.objects.filter(historico__aluno=self.aluno).count(), 0)
+        self.assertEqual(Historico_Academico.objects.filter(aluno=self.aluno).count(), 0)
+        self.assertEqual(Disciplina_Matriculada.objects.filter(historico__aluno=self.aluno).count(), 0)
 
     def test_visualizar_historico_com_aluno(self):
         self.client.force_authenticate(user=self.usuario)
@@ -344,7 +308,7 @@ class HistoricoAcademicoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertIn('Content-Disposition', response)
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
         historico.delete()
 
     def test_visualizar_historico_com_professor(self):
@@ -366,7 +330,7 @@ class HistoricoAcademicoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertIn('Content-Disposition', response)
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
         historico.delete()
 
     def test_visualizar_historico_outro_aluno(self):
@@ -382,7 +346,6 @@ class HistoricoAcademicoTests(APITestCase):
             curriculo="Link do curriculo",
             github="https://github.com/outroaluno",
             linkedin="https://linkedin.com/in/outroaluno",
-            cra=8.5,
             user=outro_usuario
         )
         self.client.force_authenticate(user=outro_usuario)
@@ -396,19 +359,19 @@ class HistoricoAcademicoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_visualizar_historico_sem_historico(self):
-        HistoricoAcademico.objects.filter(aluno=self.aluno).delete()
+        Historico_Academico.objects.filter(aluno=self.aluno).delete()
         self.client.force_authenticate(user=self.usuario)
         response = self.client.get(self.url_visualizar)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_verificar_dados_processados(self):
         self.test_upload_historico()
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
 
         self.assertIsNotNone(historico.cra)
 
-        disciplinas = Disciplina.objects.filter(historico=historico)
-        self.assertGreater(len(disciplinas), 0)
+        disciplinas_matriculadas = Disciplina_Matriculada.objects.filter(historico=historico)
+        self.assertGreater(len(disciplinas_matriculadas), 0)
 
         
 class InteresseNoProjetoTests(TestCase):
@@ -418,7 +381,7 @@ class InteresseNoProjetoTests(TestCase):
         self.aluno = Aluno.objects.create(user=self.user, matricula='123456789', nome='Aluno Teste', email='aluno@teste.com')
         self.userP = User.objects.create_user(username='professor@teste.com', password='senha123')
         self.professor = Professor.objects.create(user=self.userP, nome='Professor Teste', email='professor@teste.com')
-
+        
         self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor)
 
         self.url = reverse('interessar_no_projeto', args=[self.projeto.id_projeto])
@@ -540,7 +503,6 @@ class AlunoUpdateTests(APITestCase):
             curriculo="Link do curriculo",
             github="https://github.com/joaosilva",
             linkedin="https://linkedin.com/in/joaosilva",
-            cra=9.3,
             user=self.usuario
         )
         self.url_editar = reverse('editar_perfil_aluno')
