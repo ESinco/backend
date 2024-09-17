@@ -25,7 +25,7 @@ def criar_projeto(request):
         return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
 
     if request.method == 'POST':
-        serializer = ProjetoPostSerializer(data=request.data)
+        serializer = ProjetoInformacoesSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
