@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from api_aluno.views import *
-from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
+from api_aluno.models import Aluno, Historico_Academico, Disciplina_Matriculada
 from api_professor.models import Professor
 from api_projeto.models import Projeto
 from api_rest.models import *
@@ -238,12 +238,12 @@ class HistoricoAcademicoTests(APITestCase):
                 format='multipart'
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+            historico = Historico_Academico.objects.get(aluno=self.aluno)
             self.assertIsNotNone(historico)
             self.assertTrue(os.path.isfile(historico.historico_pdf.path))
             self.assertIsNotNone(historico.cra)
-            disciplinas = Disciplina.objects.filter(historico=historico)
-            self.assertGreater(len(disciplinas), 0)
+            disciplinas_matriculadas = Disciplina_Matriculada.objects.filter(historico=historico)
+            self.assertGreater(len(disciplinas_matriculadas), 0)
 
     def test_upload_novo_historico_apaga_antigo(self):
         with open(self.pdf_path, 'rb') as pdf_file:
@@ -254,9 +254,9 @@ class HistoricoAcademicoTests(APITestCase):
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
         caminho_pdf_antigo = historico.historico_pdf.path
-        disciplinas_anteriores = Disciplina.objects.filter(historico=historico)
+        disciplinas_anteriores = Disciplina_Matriculada.objects.filter(historico=historico)
         self.assertTrue(os.path.isfile(caminho_pdf_antigo))
         self.assertGreater(len(disciplinas_anteriores), 0)
 
@@ -269,10 +269,10 @@ class HistoricoAcademicoTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertFalse(os.path.isfile(caminho_pdf_antigo))
-        historico_atualizado = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico_atualizado = Historico_Academico.objects.get(aluno=self.aluno)
         caminho_pdf_novo = historico_atualizado.historico_pdf.path
         self.assertTrue(os.path.isfile(caminho_pdf_novo))
-        disciplinas_novas = Disciplina.objects.filter(historico=historico_atualizado)
+        disciplinas_novas = Disciplina_Matriculada.objects.filter(historico=historico_atualizado)
         self.assertNotEqual(list(disciplinas_anteriores), list(disciplinas_novas))
 
     def test_upload_historico_aluno_nao_existe(self):
@@ -295,13 +295,13 @@ class HistoricoAcademicoTests(APITestCase):
 
     def test_delete_historico_removes_pdf(self):
         self.test_upload_historico()
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
         pdf_file_path = historico.historico_pdf.path
         self.assertTrue(os.path.isfile(pdf_file_path))
         historico.delete()
         self.assertFalse(os.path.isfile(pdf_file_path))
-        self.assertEqual(HistoricoAcademico.objects.filter(aluno=self.aluno).count(), 0)
-        self.assertEqual(Disciplina.objects.filter(historico__aluno=self.aluno).count(), 0)
+        self.assertEqual(Historico_Academico.objects.filter(aluno=self.aluno).count(), 0)
+        self.assertEqual(Disciplina_Matriculada.objects.filter(historico__aluno=self.aluno).count(), 0)
 
     def test_visualizar_historico_com_aluno(self):
         self.client.force_authenticate(user=self.usuario)
@@ -310,7 +310,7 @@ class HistoricoAcademicoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertIn('Content-Disposition', response)
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
         historico.delete()
 
     def test_visualizar_historico_com_professor(self):
@@ -332,7 +332,7 @@ class HistoricoAcademicoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertIn('Content-Disposition', response)
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
         historico.delete()
 
     def test_visualizar_historico_outro_aluno(self):
@@ -362,19 +362,19 @@ class HistoricoAcademicoTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_visualizar_historico_sem_historico(self):
-        HistoricoAcademico.objects.filter(aluno=self.aluno).delete()
+        Historico_Academico.objects.filter(aluno=self.aluno).delete()
         self.client.force_authenticate(user=self.usuario)
         response = self.client.get(self.url_visualizar)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_verificar_dados_processados(self):
         self.test_upload_historico()
-        historico = HistoricoAcademico.objects.get(aluno=self.aluno)
+        historico = Historico_Academico.objects.get(aluno=self.aluno)
 
         self.assertIsNotNone(historico.cra)
 
-        disciplinas = Disciplina.objects.filter(historico=historico)
-        self.assertGreater(len(disciplinas), 0)
+        disciplinas_matriculadas = Disciplina_Matriculada.objects.filter(historico=historico)
+        self.assertGreater(len(disciplinas_matriculadas), 0)
 
         
 class InteresseNoProjetoTests(TestCase):

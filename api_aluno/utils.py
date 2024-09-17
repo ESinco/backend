@@ -1,6 +1,6 @@
 import pdfplumber
-from .models import Disciplina
-
+from .models import Disciplina_Matriculada
+from api_rest.models import Disciplina
 
 def extrair_disciplinas_do_pdf(historico_academico):
     pdf_path = historico_academico.historico_pdf.path
@@ -42,11 +42,6 @@ def extrair_disciplinas_do_pdf(historico_academico):
                         creditos = 0  # Atribuir valor padrão para evitar null
 
                     try:
-                        carga_horaria = int(partes[(-4 + aux)])
-                    except (ValueError, IndexError):
-                        carga_horaria = 0  # Atribuir valor padrão para evitar null
-
-                    try:
                         media_str = partes[(-3 + aux)]
                         media_str = media_str.replace(',', '.')
                         media = float(media_str)
@@ -71,22 +66,17 @@ def extrair_disciplinas_do_pdf(historico_academico):
 
                         i += 1
 
-                    nome_professor = ", ".join(nomes_professores)
-
-                    disciplina = Disciplina(
+                    disciplina = Disciplina.objects.get(pk=codigo)
+                    disciplina_matriculada = Disciplina_Matriculada(
                         historico=historico_academico,
-                        codigo=codigo,
-                        nome=nome,
-                        professor=nome_professor,
+                        disciplina=disciplina,
                         tipo=tipo,
-                        creditos=creditos,
-                        carga_horaria=carga_horaria,
                         media=media,
                         situacao=situacao,
                         periodo=periodo
                     )
-                    disciplina.save()
-                    disciplinas.append(disciplina)
+                    disciplina_matriculada.save()
+                    disciplinas.append(disciplina_matriculada)
 
                     if media is not None and creditos is not None:
                         total_creditos += creditos
