@@ -33,7 +33,7 @@ class AlunoPerfilSerializer(serializers.ModelSerializer):
 class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
-        fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin', 'cra']
+        fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin']
 
 class AlunoInformacoesSerializer(serializers.ModelSerializer):
     class Meta:

@@ -42,8 +42,7 @@ class AlunoModelTestCase(TestCase):
             'email: andre@example.com\n'
             'curriculo: None\n'
             'github: None\n'
-            'linkedin: None\n'
-            'cra: None'
+            'linkedin: None'
         )
         self.assertEqual(str(self.aluno), expected_str)
 
@@ -219,7 +218,6 @@ class HistoricoAcademicoTests(APITestCase):
             curriculo="Link do curriculo",
             github="https://github.com/joaosilva",
             linkedin="https://linkedin.com/in/joaosilva",
-            cra=9.3,
             user=cls.usuario
         )
         cls.url_upload = reverse('upload_historico')
@@ -348,7 +346,6 @@ class HistoricoAcademicoTests(APITestCase):
             curriculo="Link do curriculo",
             github="https://github.com/outroaluno",
             linkedin="https://linkedin.com/in/outroaluno",
-            cra=8.5,
             user=outro_usuario
         )
         self.client.force_authenticate(user=outro_usuario)
@@ -506,7 +503,6 @@ class AlunoUpdateTests(APITestCase):
             curriculo="Link do curriculo",
             github="https://github.com/joaosilva",
             linkedin="https://linkedin.com/in/joaosilva",
-            cra=9.3,
             user=self.usuario
         )
         self.url_editar = reverse('editar_perfil_aluno')
