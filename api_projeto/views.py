@@ -10,8 +10,6 @@ from rest_framework import status
 
 from .models import *
 from .serializers import *
-from api_aluno.models import HistoricoAcademico, Disciplina
-from api_aluno.serializers import AlunoInformacoesSerializer
 
 from io import StringIO
 
