@@ -21,9 +21,11 @@ class ProjetoSemIdSerializer(serializers.ModelSerializer):
         fields = ['nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel', 'habilidades']
         
 class ProjetoInformacoesSerializer(serializers.ModelSerializer):
+    habilidades = serializers.PrimaryKeyRelatedField(many=True, queryset=Habilidade.objects.all(), required=False)
+
     class Meta:
         model = Projeto
-        fields = ['nome', 'descricao', 'laboratorio', 'vagas']
+        fields = ['nome', 'descricao', 'laboratorio', 'vagas', 'habilidades']
 
 class ListaFiltragemPostSerializer(serializers.ModelSerializer):
     filtro_habilidades = serializers.PrimaryKeyRelatedField(many=True, queryset=Habilidade.objects.all(), required=False)
