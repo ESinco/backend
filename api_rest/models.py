@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.postgres.fields import ArrayField
 
 class Habilidade(models.Model):
     nome = models.TextField(primary_key=True)
@@ -32,4 +32,4 @@ class Feedback(models.Model):
 class Disciplina(models.Model):
     codigo = models.PositiveIntegerField(primary_key=True)
     nome = models.TextField(null=False)
-    disciplinas_equivalentes = models.ManyToManyField('self', blank=True)
+    disciplinas_equivalentes = ArrayField(models.PositiveIntegerField(), default=list)
