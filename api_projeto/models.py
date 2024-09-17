@@ -29,7 +29,7 @@ class Associacao(models.Model):
     status = models.TextField(null=True)
     
 class Lista_Filtragem(models.Model):
-    id_filtro = models.AutoField(primary_key=True)
+    id_lista = models.AutoField(primary_key=True)
     id_projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE)
     id_professor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
     titulo = models.TextField(null=False)
