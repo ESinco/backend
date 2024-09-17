@@ -29,6 +29,7 @@ class Aluno(models.Model):
                 f'cra: {self.cra}')
         
 class Disciplina_Matriculada(models.Model):
+    id = models.AutoField(primary_key=True)
     historico = models.ForeignKey('Historico_Academico', related_name='disciplinas_matriculadas', on_delete=models.CASCADE)
     disciplina = models.ForeignKey(Disciplina, related_name='disciplina', null=False, on_delete=models.CASCADE)
     tipo = models.CharField(max_length=50)
@@ -40,6 +41,7 @@ class Disciplina_Matriculada(models.Model):
         return f"{self.nome} - {self.media}"
         
 class Historico_Academico(models.Model):
+    id = models.AutoField(primary_key=True)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, related_name='historicos')
     historico_pdf = models.FileField(upload_to='historicos/')
     cra = models.FloatField(null=True, blank=True)
