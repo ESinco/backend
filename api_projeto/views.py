@@ -153,3 +153,28 @@ def get_all_projetos_by_aluno(request):
         return Response(projetos_com_status, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def editar_projeto(request, id_projeto):
+    try:
+        professor_autenticado = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas professores podem editar projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        projeto = Projeto.objects.get(pk=id_projeto)
+    except Projeto.DoesNotExist:
+        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+    
+    if projeto.responsavel != professor_autenticado:
+        return Response({"detail": "Você não tem permissão para editar este projeto."}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method in ['PUT', 'PATCH']:
+        serializer = ProjetoInformacoesSerializer(projeto, data=request.data, partial=(request.method == 'PATCH'))
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
