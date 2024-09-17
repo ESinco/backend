@@ -62,3 +62,9 @@ class Lista_Filtragem(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+        
+class Colaborador(models.Model):
+    id = models.AutoField(primary_key=True)
+    professor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
+    projeto = models.ForeignKey(Projeto, null=False, on_delete=models.CASCADE)
+    

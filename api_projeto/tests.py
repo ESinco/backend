@@ -11,30 +11,26 @@ from django.test import TestCase
 from django.utils import timezone
 from datetime import datetime
 
-from api_projeto.models import Projeto, Associacao
+from api_projeto.models import Projeto, Associacao, Colaborador
 from api_professor.models import Professor
 from api_aluno.models import Aluno, HistoricoAcademico, Disciplina
 from api_rest.models import Habilidade, Experiencia, Interesse
 from api_projeto.views import *
 
 from io import StringIO
-
 import os
-
 import pytz
 
 
-#Model
-class ProjetoModelTest(TestCase):
+class ProjetoModelTestCase(TestCase):
 
-    def setUp(self):        
-        usuario = User.objects.create_user(
+    def setUp(self):
+        self.usuario = User.objects.create_user(
             username='joao@example.com',
             email='joao@example.com',
             password='1234'
         )
-        
-        self.professor = Professor.objects.create(nome="João Arthur", email="joao@example.com", user=usuario)
+        self.professor = Professor.objects.create(nome="João Arthur", email="joao@example.com", user=self.usuario)
         self.projeto = Projeto.objects.create(
             nome='Projeto de Teste',
             descricao='Este é um projeto de teste.',
@@ -51,25 +47,26 @@ class ProjetoModelTest(TestCase):
         
         timezone_str = 'America/Fortaleza'
         tz = pytz.timezone(timezone_str)
-        time_now_date = datetime.now(tz)
+        time_now_date = datetime.now(tz).date()
         data_de_criacao_date = self.projeto.data_de_criacao.date()
-        self.assertEqual(data_de_criacao_date, time_now_date.date())
+        self.assertEqual(data_de_criacao_date, time_now_date)
         self.assertEqual(self.projeto.vagas, 5)
         self.assertEqual(self.projeto.responsavel, self.professor)
 
     def test_projeto_str(self):
-        expected_str = (f'nome: Projeto de Teste\n'
-                f'descrição: Este é um projeto de teste.\n'
-                f'laboratório: João Arthur\n'
-                f'data de criação: {timezone.now().strftime("%d/%m/%Y")}\n'
-                f'vagas: 5\n'
-                f'responsavel: {self.projeto.responsavel}')
-    
-        self.assertEqual(str(self.projeto), expected_str)
-        
-#Views
-# Testando POST de projeto.
-class CriarProjetoViewTest(APITestCase):
+        expected_str = (
+            f'nome: Projeto de Teste\n'
+            f'descrição: Este é um projeto de teste.\n'
+            f'laboratório: João Arthur\n'
+            f'data de criação: {timezone.now().strftime("%d/%m/%Y")}\n'
+            f'vagas: 5\n'
+            f'responsavel: {self.projeto.responsavel}'
+        )
+        self.assertEqual(expected_str, str(self.projeto), "A representação em string do projeto está incorreta.")
+
+
+class CriarProjetoViewTestCase(APITestCase):
+
     def setUp(self):
         self.client = APIClient()
         usuario = User.objects.create_user(
@@ -91,27 +88,23 @@ class CriarProjetoViewTest(APITestCase):
         
     def test_criar_projeto_sucesso(self):
         response = self.client.post(self.url, self.projeto_data, format='json')
-        
-        # Asserts
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['nome'], self.projeto_data['nome'])
-        self.assertEqual(response.data['responsavel'], self.professor.id)
+        self.assertEqual(response.data['responsavel']['id'], self.professor.id)
+        self.assertEqual(response.data['responsavel']['nome'], self.professor.nome)
+        self.assertEqual(response.data['responsavel']['email'], self.professor.email)
 
 
     def test_criar_projeto_nome_vazio(self):
         invalid_data = self.projeto_data.copy()
         invalid_data['nome'] = ''
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_criar_projeto_laboratorio_vazio(self):
         invalid_data = self.projeto_data.copy()
         invalid_data['laboratorio'] = ''
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_criar_projeto_token_invalido(self):
@@ -119,12 +112,12 @@ class CriarProjetoViewTest(APITestCase):
         response = self.client.post(self.url, self.projeto_data, format='json')
         
         #Asserts
-        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn("detail", response.data)
         self.assertIn("code", response.data)
         self.assertIn("messages", response.data)
-        self.assertEqual("token_not_valid", response.data["code"])
-        self.assertEqual("O token é inválido ou expirado", response.data["messages"][0]["message"])
+        self.assertEqual(response.data["code"], "token_not_valid")
+        self.assertEqual(response.data["messages"][0]["message"], "O token é inválido ou expirado")
     
     def test_criar_projeto_token_tipo_invalido(self):
         usuario = User.objects.create_user(
@@ -137,12 +130,12 @@ class CriarProjetoViewTest(APITestCase):
         response = self.client.post(self.url, self.projeto_data, format='json')
         
         #Asserts
-        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn("detail", response.data)
         self.assertIn("code", response.data)
         self.assertIn("messages", response.data)
-        self.assertEqual("token_not_valid", response.data["code"])
-        self.assertEqual("O token é inválido ou expirado", str(response.data["messages"][0]["message"]))
+        self.assertEqual(response.data["code"], "token_not_valid")
+        self.assertEqual(str(response.data["messages"][0]["message"]), "O token é inválido ou expirado")
         
     def test_criar_projeto_token_aluno(self):
         usuario = User.objects.create_user(
@@ -161,13 +154,12 @@ class CriarProjetoViewTest(APITestCase):
         response = self.client.post(self.url, self.projeto_data, format='json')
         
         #Asserts
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertIn("detail", response.data)
-        self.assertEqual("Acesso negado. Apenas professores podem criar projetos.", response.data["detail"])
+        self.assertEqual(response.data["detail"], "Acesso negado. Apenas professores podem criar projetos.")
 
-    
-# Testes de GETALL projetos
-class GetProjetosViewTest(APITestCase):
+
+class GetProjetosViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('get_projetos')
@@ -197,8 +189,8 @@ class GetProjetosViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
         
-# Testes de GETbyId para projetos
-class GetByIdProjetoViewTest(APITestCase):
+
+class GetProjetoByIdViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         usuario = User.objects.create_user(
@@ -220,8 +212,8 @@ class GetByIdProjetoViewTest(APITestCase):
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-# Testes para a View de get_all_projetos_by_professor
-class GetAllProjetosByProfessorViewTest(APITestCase):
+
+class GetAllProjetosByProfessorViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         usuario = User.objects.create_user(
@@ -254,7 +246,8 @@ class GetAllProjetosByProfessorViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
         
-class CriarProjetoCSVTests(APITestCase):
+
+class CriarProjetoCSVTestCase(APITestCase):
 
     def setUp(self):
         # Criar usuário e professor autenticado
@@ -331,7 +324,7 @@ class CriarProjetoCSVTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class GetAllProjetosByAlunoViewTest(APITestCase):
+class GetAllProjetosByAlunoViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.usuario_aluno = User.objects.create_user(
@@ -375,36 +368,36 @@ class GetAllProjetosByAlunoViewTest(APITestCase):
         response = self.client.get(self.url, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(1, len(response.data))
-        self.assertEqual('Projeto 1', response.data[0]['nome'])
-        self.assertEqual('Descrição 1', response.data[0]['descricao'])
-        self.assertEqual('Dono 1', response.data[0]['laboratorio'])
-        self.assertEqual(5, response.data[0]['vagas'])
-        self.assertEqual(None, response.data[0]['status'])
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['nome'], 'Projeto 1')
+        self.assertEqual(response.data[0]['descricao'], 'Descrição 1')
+        self.assertEqual(response.data[0]['laboratorio'], 'Dono 1')
+        self.assertEqual(response.data[0]['vagas'], 5)
+        self.assertEqual(response.data[0]['status'], None)
 
     def test_get_all_projetos_by_aluno_token_invalido(self):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer TOKEN_INVALIDO')        
         response = self.client.get(self.url, format='json')
         
-        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
-        self.assertEqual("token_not_valid",response.data['code'])
-        self.assertEqual("O token é inválido ou expirado",response.data['messages'][0]['message'])
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['code'], "token_not_valid")
+        self.assertEqual(response.data['messages'][0]['message'], "O token é inválido ou expirado")
     
     def test_get_all_projetos_by_aluno_token_do_tipo_errado(self):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.refresh}')        
         response = self.client.get(self.url, format='json')
         
-        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
-        self.assertEqual("token_not_valid",response.data['code'])
-        self.assertEqual("Token tem tipo errado",response.data['messages'][0]['message'])
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['code'], "token_not_valid")
+        self.assertEqual(response.data['messages'][0]['message'], "Token tem tipo errado")
 
     def test_get_all_projetos_by_aluno_token_professor(self):
         refresh_professor = RefreshToken.for_user(self.usuario_professor)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh_professor.access_token}')        
         response = self.client.get(self.url, format='json')
         
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
-        self.assertEqual("Acesso negado. Apenas alunos podem ver seus próprios projetos inscritos.", response.data['detail'])
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "Acesso negado. Apenas alunos podem ver seus próprios projetos inscritos.")
 
     def test_get_all_projetos_by_aluno_sem_projeto(self):
         usuario_aluno2 = User.objects.create_user(
@@ -423,4 +416,61 @@ class GetAllProjetosByAlunoViewTest(APITestCase):
         response = self.client.get(self.url, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual("Nenhum projeto encontrado.", response.data['detail'])
+        self.assertEqual(response.data['detail'],"Nenhum projeto encontrado.")
+        
+class CadastrarColaboradorTests(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_responsavel = User.objects.create_user(username='professor_responsavel@example.com', password='1234')
+        self.professor_responsavel = Professor.objects.create(user=self.user_responsavel, nome='Professor Responsável', email='professor_responsavel@example.com')
+
+        self.user_colaborador = User.objects.create_user(username='professor_colaborador@example.com', password='1234')
+        self.professor_colaborador = Professor.objects.create(user=self.user_colaborador, nome='Professor Colaborador', email='professor_colaborador@example.com')
+
+        self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor_responsavel)
+
+        self.url = reverse('cadastrar_colaborador', args=[self.projeto.id_projeto, self.professor_colaborador.email])
+        self.client.force_authenticate(user=self.user_responsavel)
+
+    def test_cadastrar_colaborador_com_sucesso(self):
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['detail'], 'Associação criada com sucesso.')
+        self.assertEqual(Colaborador.objects.count(), 1)
+        
+    def test_projeto_nao_encontrado(self):
+        # Tentando associar a um projeto que não existe
+        url_projeto_invalido = reverse('cadastrar_colaborador', args=[9999, self.professor_colaborador.email])
+        response = self.client.post(url_projeto_invalido, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Projeto não encontrado.')
+    
+    def test_professor_nao_responsavel_acesso_negado(self):
+        # Autenticar como outro professor que não é o responsável
+        user_professor_nao_responsavel = User.objects.create_user(username='outro_professor@example.com', password='1234')
+        professor_nao_responsavel = Professor.objects.create(user=user_professor_nao_responsavel, nome='Outro Professor', email='outro_professor@example.com')
+
+        self.client.force_authenticate(user=user_professor_nao_responsavel)
+        response = self.client.post(self.url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'Acesso negado. Apenas o responsavel do projeto pode cadastrar um colaborador.')
+
+    def test_professor_colaborador_nao_encontrado(self):
+        # Tentando associar um professor colaborador que não existe
+        url_colaborador_invalido = reverse('cadastrar_colaborador', args=[self.projeto.id_projeto, 'nao_existe@example.com'])
+        response = self.client.post(url_colaborador_invalido, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Professor colaborador não encontrado.')
+
+    def test_professor_ja_e_colaborador(self):
+        # Tentando criar colaborador duas vezes
+        Colaborador.objects.create(professor=self.professor_colaborador, projeto=self.projeto)
+
+        response = self.client.post(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Professor ja é colaborador desse projeto.')

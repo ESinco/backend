@@ -2,9 +2,11 @@ from rest_framework import serializers
 
 from .models import Projeto, Lista_Filtragem
 from api_rest.models import Habilidade, Experiencia, Interesse
+from api_professor.serializers import ProfessorSerializer
 
 class ProjetoSerializer(serializers.ModelSerializer):
     data_de_criacao = serializers.DateTimeField(format="%d/%m/%Y")
+    responsavel = ProfessorSerializer()
     
     class Meta:
         model = Projeto

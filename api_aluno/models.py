@@ -3,8 +3,7 @@ from django.contrib.auth.models import User
 import os
 
 from api_professor.models import Professor
-from api_rest.models import Habilidade, Experiencia, Interesse, Feedback
-
+from api_rest.models import Habilidade, Experiencia, Interesse, Feedback, Disciplina
 
 class Aluno(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
@@ -28,14 +27,11 @@ class Aluno(models.Model):
                 f'linkedin: {self.linkedin}\n'
                 f'cra: {self.cra}')
         
-class Disciplina(models.Model):
-    historico = models.ForeignKey('HistoricoAcademico', related_name='disciplinas', on_delete=models.CASCADE)
-    codigo = models.CharField(max_length=20)
-    nome = models.CharField(max_length=100)
-    professor = models.CharField(max_length=300)
+class Disciplina_Matriculada(models.Model):
+    id = models.AutoField(primary_key=True)
+    historico = models.ForeignKey('Historico_Academico', related_name='disciplinas_matriculadas', on_delete=models.CASCADE)
+    disciplina = models.ForeignKey(Disciplina, related_name='disciplina', null=False, on_delete=models.CASCADE)
     tipo = models.CharField(max_length=50)
-    creditos = models.IntegerField()
-    carga_horaria = models.IntegerField()
     media = models.FloatField(null=True, blank=True)
     situacao = models.CharField(max_length=50)
     periodo = models.CharField(max_length=10)
@@ -43,7 +39,8 @@ class Disciplina(models.Model):
     def __str__(self):
         return f"{self.nome} - {self.media}"
         
-class HistoricoAcademico(models.Model):
+class Historico_Academico(models.Model):
+    id = models.AutoField(primary_key=True)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, related_name='historicos')
     historico_pdf = models.FileField(upload_to='historicos/')
     cra = models.FloatField(null=True, blank=True)
