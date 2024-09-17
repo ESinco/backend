@@ -25,7 +25,7 @@ def login(request):
     try:
         usuario = User.objects.get(email=email)
     except User.DoesNotExist:
-        return Response({"detail": "Professor não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
     if not usuario.check_password(senha):
         return Response({"detail": "Senha incorreta."}, status=status.HTTP_401_UNAUTHORIZED)
