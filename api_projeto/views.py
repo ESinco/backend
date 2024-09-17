@@ -96,7 +96,14 @@ def get_projetos(request):
     if request.method == 'GET':
         projetos = Projeto.objects.all()
         serializer = ProjetoSerializer(projetos, many=True)
-        return Response(serializer.data)
+        data = serializer.data
+        resultados = [{
+                **item,
+                'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count()
+            }
+            for item in data
+        ]
+        return Response(resultados)
 
 @api_view(['GET'])
 def get_by_id_projeto(request, id_projeto):
@@ -104,7 +111,9 @@ def get_by_id_projeto(request, id_projeto):
         try:
             projeto = Projeto.objects.get(pk=id_projeto)
             serializer = ProjetoSerializer(projeto)
-            return Response(serializer.data)
+            data = serializer.data
+            data['quantidade_de_inscritos'] = Associacao.objects.filter(projeto=projeto).count()
+            return Response(data)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -120,7 +129,14 @@ def get_all_projetos_by_professor(request):
         try:
             projetos = Projeto.objects.filter(responsavel=responsavel)
             serializer = ProjetoSerializer(projetos, many=True)
-            return Response(serializer.data)
+            data = serializer.data
+            resultados = [{
+                    **item,
+                'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count()
+                }
+                for item in data
+            ]
+            return Response(resultados)
         except Projeto.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 

@@ -7,7 +7,7 @@ from .models import Habilidade, Experiencia, Interesse, Feedback
 from .views import *
 
 
-class LoginTest(APITestCase):
+class LoginTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         usuario_professor = User.objects.create_user(
@@ -63,7 +63,7 @@ class LoginTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('detail', response.data)
-        self.assertEqual('Email e senha são obrigatórios.', response.data['detail'])
+        self.assertEqual(response.data['detail'], 'Email e senha são obrigatórios.')
 
     def test_login_com_senha_vazia(self):
         invalid_data = {
@@ -75,7 +75,7 @@ class LoginTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('detail', response.data)
-        self.assertEqual('Email e senha são obrigatórios.', response.data['detail'])
+        self.assertEqual(response.data['detail'], 'Email e senha são obrigatórios.')
 
         
     def test_login_inexistente(self):
@@ -88,7 +88,7 @@ class LoginTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('detail', response.data)
-        self.assertEqual('Professor não encontrado.', response.data['detail'])
+        self.assertEqual(response.data['detail'], 'Usuário não encontrado.')
         
     def test_login_professor_senha_incorreta(self):
         invalid_data = {
@@ -100,7 +100,7 @@ class LoginTest(APITestCase):
         #Asserts
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
-        self.assertEqual('Senha incorreta.', response.data['detail'])
+        self.assertEqual(response.data['detail'], 'Senha incorreta.')
 
 
     def test_login_aluno_sucesso(self):
@@ -119,14 +119,13 @@ class LoginTest(APITestCase):
             "senha": "12345"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
+
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
-        self.assertEqual('Senha incorreta.', response.data['detail'])
-        
+        self.assertEqual(response.data['detail'], 'Senha incorreta.')
 
-class TagTests(APITestCase):
+
+class TagTestCase(APITestCase):
     def setUp(self):
         Habilidade.objects.create(nome='Programação', grupo='Hard Skills')
         Experiencia.objects.create(nome='Gestão de Projetos', grupo='Experiências')
