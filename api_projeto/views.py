@@ -87,9 +87,7 @@ def criar_projeto_csv(request):
             except Aluno.DoesNotExist:
                 matricula_inexistente.append(matricula)
     
-    return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)
-    
-       
+    return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)  
    
 @api_view(['GET'])
 def get_projetos(request):
@@ -167,6 +165,70 @@ def get_all_projetos_by_aluno(request):
             return Response({"detail": "Nenhum projeto encontrado."}, status=status.HTTP_404_NOT_FOUND)
         
         return Response(projetos_com_status, status=status.HTTP_200_OK)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def salvar_filtragem(request):
+    if request.method == 'POST':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem cadastrar listas."}, status=status.HTTP_403_FORBIDDEN)
+        
+        entradas = ListaFiltragemPostSerializer(data=request.data)
+        if not entradas.is_valid():
+            return Response(entradas.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        id_projeto = entradas.data['id_projeto']
+        projeto = Projeto.objects.get(pk=id_projeto)
+        if not projeto.responsavel.id == professor.id:
+            return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem criar filtros."}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = entradas.data.copy()
+        data['id_professor'] = professor.id
+        serializer = ListaFiltragemSemIdSerializer(data=data)
+        if serializer.is_valid():
+            lista_filtros = serializer.save()
+            response_serializer = ListaFiltragemSerializer(lista_filtros)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def editar_filtragem(request, id_lista):
+    if request.method == 'PUT':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem cadastrar listas."}, status=status.HTTP_403_FORBIDDEN)
+        
+        entradas = ListaFiltragemPutSerializer(data=request.data)
+        if not entradas.is_valid():
+            return Response(entradas.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            lista = Lista_Filtragem.objects.get(pk=id_lista)
+        except Lista_Filtragem.DoesNotExist:
+            return Response({"detail": "Lista não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not lista.id_professor.id == professor.id:
+            return Response({"detail": "Apenas o dono da lista pode alterá-la."}, status=status.HTTP_400_BAD_REQUEST)
+
+        lista.titulo = entradas.data['titulo']
+        lista.filtro_habilidades.set(entradas.data.get('filtro_habilidades', lista.filtro_habilidades.all()))
+        lista.filtro_experiencias.set(entradas.data.get('filtro_experiencias', lista.filtro_experiencias.all()))
+        lista.filtro_interesses.set(entradas.data.get('filtro_interesses', lista.filtro_interesses.all()))
+        lista.filtro_cra = entradas.data.get('filtro_cra', lista.filtro_cra)
+        lista.filtro_disciplinas = entradas.data.get('filtro_disciplinas', lista.filtro_disciplinas)
+
+        lista.save()
+        response_serializer = ListaFiltragemSerializer(lista)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 

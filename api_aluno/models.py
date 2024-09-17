@@ -13,7 +13,6 @@ class Aluno(models.Model):
     curriculo = models.TextField(null=True)
     github = models.TextField(null=True)
     linkedin = models.TextField(null=True)
-    cra = models.FloatField(null=True)
     habilidades = models.ManyToManyField(Habilidade, related_name="alunos")
     experiencias = models.ManyToManyField(Experiencia, related_name="alunos")
     interesses = models.ManyToManyField(Interesse, related_name="alunos")
@@ -24,8 +23,7 @@ class Aluno(models.Model):
                 f'email: {self.email}\n'
                 f'curriculo: {self.curriculo}\n'
                 f'github: {self.github}\n'
-                f'linkedin: {self.linkedin}\n'
-                f'cra: {self.cra}')
+                f'linkedin: {self.linkedin}')
         
 class Disciplina_Matriculada(models.Model):
     id = models.AutoField(primary_key=True)

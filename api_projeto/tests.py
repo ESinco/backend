@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -12,6 +14,7 @@ from datetime import datetime
 from api_projeto.models import Projeto, Associacao, Colaborador
 from api_professor.models import Professor
 from api_aluno.models import Aluno
+from api_projeto.views import *
 
 from io import StringIO
 import os
