@@ -68,6 +68,26 @@ def editar_perfil_aluno(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def visualizar_perfil_aluno(request, matricula):
+    user = request.user
+
+    try:
+        aluno = Aluno.objects.get(matricula=matricula)
+    except Aluno.DoesNotExist:
+        return Response({'detail': 'Aluno não encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+    if hasattr(user, 'professor'):
+        serializer = AlunoPerfilProfessorSerializer(aluno)
+        return Response(serializer.data)
+
+    if user == aluno.user:
+        serializer = AlunoPerfilSerializer(aluno)
+        return Response(serializer.data)
+
+    return Response({'detail': 'Acesso não autorizado'}, status=status.HTTP_403_FORBIDDEN)
+
+@api_view(['GET'])
 def get_all_alunos(request):
     if request.method == 'GET':
         alunos = Aluno.objects.all()

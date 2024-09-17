@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import Professor
 from api_aluno.models import Avaliacao
 from django.contrib.auth.models import User
+from api_rest.models import Feedback
 
 
 class ProfessorSerializer(serializers.ModelSerializer):
@@ -33,8 +34,9 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class AvaliacaoSemIdSerializer(serializers.ModelSerializer):   
-    tags = serializers.ListField(
-        child=serializers.CharField(max_length=100),
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Feedback.objects.all(),
         required=False
     )
     

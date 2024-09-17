@@ -4,6 +4,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Aluno, Disciplina_Matriculada, Historico_Academico
 from api_rest.models import *
 from api_rest.serializers import *
+from .models import *
+from api_professor.serializers import AvaliacaoSemIdSerializer
 
 from django.contrib.auth.models import User
 
@@ -29,6 +31,17 @@ class AlunoPerfilSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = '__all__'
+
+class AlunoPerfilProfessorSerializer(serializers.ModelSerializer):
+    avaliacao = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Aluno
+        fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin', 'habilidades', 'experiencias', 'interesses', 'avaliacao']
+
+    def get_avaliacao(self, obj):
+        avaliacoes = Avaliacao.objects.filter(id_aluno=obj)
+        return AvaliacaoSemIdSerializer(avaliacoes, many=True).data
 
 class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
