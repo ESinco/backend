@@ -3,8 +3,7 @@ from django.contrib.auth.models import User
 import os
 
 from api_professor.models import Professor
-from api_rest.models import Habilidade, Experiencia, Interesse, Feedback
-from api_rest.models import Disciplina
+from api_rest.models import Habilidade, Experiencia, Interesse, Feedback, Disciplina
 
 class Aluno(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)

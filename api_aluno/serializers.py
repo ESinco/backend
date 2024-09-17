@@ -2,6 +2,8 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Aluno, Disciplina_Matriculada, Historico_Academico
+from api_rest.models import *
+from api_rest.serializers import *
 
 from django.contrib.auth.models import User
 
@@ -22,7 +24,12 @@ class AlunoPostSerializer(serializers.ModelSerializer):
         )
         aluno = Aluno.objects.create(user=usuario, **validated_data)
         return aluno
-            
+
+class AlunoPerfilSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Aluno
+        fields = '__all__'
+
 class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
