@@ -13,12 +13,10 @@ from api_rest.models import *
 import os
 
 
-#Models
-# Testando model de ALuno.
-class AlunoModelTest(TestCase):
+class AlunoModelTestCase(TestCase):
 
     def setUp(self):
-        usuario = User.objects.create_user(
+        self.usuario = User.objects.create_user(
             username='andre@example.com',
             email='andre@example.com',
             password='1234'
@@ -27,32 +25,30 @@ class AlunoModelTest(TestCase):
             matricula='121210210',
             nome='Andre Souza',
             email='andre@example.com',
-            user=usuario
+            user=self.usuario
         )
 
     def test_aluno_creation(self):
-        #Asserts
-        self.assertIsInstance(self.aluno, Aluno)
         self.assertEqual(self.aluno.matricula, '121210210')
         self.assertEqual(self.aluno.nome, 'Andre Souza')
         self.assertEqual(self.aluno.email, 'andre@example.com')
         self.assertTrue(self.aluno.user.check_password('1234'))
+        self.assertIsInstance(self.aluno, Aluno)
 
     def test_aluno_str(self):
-        expected_str = (f'matricula: 121210210\n'
-                        f'nome: Andre Souza\n'
-                        f'email: andre@example.com\n'
-                        f'curriculo: None\n'
-                        f'github: None\n'
-                        f'linkedin: None\n'
-                        f'cra: None')
-                
-        #Asserts
+        expected_str = (
+            'matricula: 121210210\n'
+            'nome: Andre Souza\n'
+            'email: andre@example.com\n'
+            'curriculo: None\n'
+            'github: None\n'
+            'linkedin: None\n'
+            'cra: None'
+        )
         self.assertEqual(str(self.aluno), expected_str)
 
-#Views
-# Testando POST de alunoes
-class CriarAlunoViewTest(APITestCase):
+
+class CriarAlunoViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('criar_aluno')
@@ -65,8 +61,7 @@ class CriarAlunoViewTest(APITestCase):
 
     def test_criar_aluno_sucesso(self):
         response = self.client.post(self.url, self.aluno_data, format='json')
-        
-        #Asserts
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['matricula'], self.aluno_data['matricula'])
         self.assertEqual(response.data['nome'], self.aluno_data['nome'])
@@ -80,8 +75,6 @@ class CriarAlunoViewTest(APITestCase):
         }
         response = self.client.post(self.url, invalid_data, format='json')
         self.assertIn('nome', response.data)
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('nome', response.data)
 
@@ -93,8 +86,6 @@ class CriarAlunoViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('matricula', response.data)
         
@@ -107,8 +98,6 @@ class CriarAlunoViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
         
@@ -121,8 +110,6 @@ class CriarAlunoViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_criar_aluno_com_email_vazio(self):
@@ -132,8 +119,6 @@ class CriarAlunoViewTest(APITestCase):
             "senha": "senha123"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
 
@@ -144,36 +129,25 @@ class CriarAlunoViewTest(APITestCase):
             "email": "joao.silva@example.com"
         }
         response = self.client.post(self.url, invalid_data, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('senha', response.data)
 
-# Testando GET de todos os alunos.
-class getAllAlunoViewTest(APITestCase):
+
+class getAllAlunoViewTestCase(APITestCase):
     
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('get_all_alunos')
-        usuario = User.objects.create_user(
-            username='andre@example.com',
-            email='andre@example.com',
-            password='213'
-        )        
-        Aluno.objects.create(matricula = "121210110", nome="Andre", email="andre@example.com", user=usuario)
-        usuario = User.objects.create_user(
-            username='rian@example.com',
-            email='rian@example.com',
-            password='213'
-        )
-        Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", user=usuario)
-        usuario = User.objects.create_user(
-            username='luana@example.com',
-            email='luana@example.com',
-            password='213'
-        )
-        Aluno.objects.create(matricula = "121210310", nome="Luana", email="luana@example.com", user=usuario)
-        
+        usuarios = [
+            User.objects.create_user(username='andre@example.com', email='andre@example.com', password='213'),
+            User.objects.create_user(username='rian@example.com', email='rian@example.com', password='213'),
+            User.objects.create_user(username='luana@example.com', email='luana@example.com', password='213')
+        ]
+        alunos = [
+            Aluno.objects.create(matricula="121210110", nome="Andre", email="andre@example.com", user=usuarios[0]),
+            Aluno.objects.create(matricula="121210210", nome="Rian", email="rian@example.com", user=usuarios[1]),
+            Aluno.objects.create(matricula="121210310", nome="Luana", email="luana@example.com", user=usuarios[2])
+        ]
     def test_get_all_alunos_sucesso(self):
         response = self.client.get(self.url, format='json')
         nomes_alunos = [aluno['nome'] for aluno in response.data]
@@ -189,13 +163,11 @@ class getAllAlunoViewTest(APITestCase):
         Aluno.objects.all().delete()
         
         response = self.client.get(self.url, format='json')
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
         
-# Testando GET de pegar Aluno por matricula.
-class getAlunoPorMatriculaTest(APITestCase):
+
+class getAlunoPorMatriculaTestCase(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -212,31 +184,25 @@ class getAlunoPorMatriculaTest(APITestCase):
         )
         self.aluno2 = Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", user=usuario)
 
-    def test_get_Aluno_by_matricula_sucesso1(self):
+    def test_get_aluno_by_matricula_sucesso1(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': self.aluno1.matricula})
         response = self.client.get(url)
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['nome'], self.aluno1.nome)
         self.assertEqual(response.data['email'], self.aluno1.email)
         
         
-    def test_get_Aluno_by_matricula_sucesso2(self):
+    def test_get_aluno_by_matricula_sucesso2(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': self.aluno1.matricula})
         response = self.client.get(url)
-        
-        #Asserts
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['matricula'], self.aluno1.matricula)
 
-    def test_get_Aluno_by_matricula_inexistente(self):
+    def test_get_aluno_by_matricula_inexistente(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': 999999999})
         response = self.client.get(url)
-        
-        #Asserts
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 class HistoricoAcademicoTests(APITestCase):
     @classmethod
@@ -418,7 +384,7 @@ class InteresseNoProjetoTests(TestCase):
         self.aluno = Aluno.objects.create(user=self.user, matricula='123456789', nome='Aluno Teste', email='aluno@teste.com')
         self.userP = User.objects.create_user(username='professor@teste.com', password='senha123')
         self.professor = Professor.objects.create(user=self.userP, nome='Professor Teste', email='professor@teste.com')
-
+        
         self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor)
 
         self.url = reverse('interessar_no_projeto', args=[self.projeto.id_projeto])
