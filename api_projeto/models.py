@@ -13,6 +13,7 @@ class Projeto(models.Model):
     vagas = models.IntegerField(null=True)
     data_de_criacao = models.DateTimeField(default=timezone.now)
     responsavel = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
+    habilidades = models.ManyToManyField(Habilidade, related_name="habilidades_desejadas", blank=True)
 
     def __str__(self):
         return (f'nome: {self.nome}\n'
