@@ -169,3 +169,31 @@ def get_all_projetos_by_aluno(request):
         return Response(projetos_com_status, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cadastrar_colaborador(request, id_projeto, email_colaborador):
+    try:
+        professor = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        projeto = Projeto.objects.get(pk=id_projeto)
+    except:
+        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+    
+    if(projeto.responsavel.id != professor.id):
+        return Response({"detail": "Acesso negado. Apenas o responsavel do projeto pode cadastrar um colaborador."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        colaborador = Professor.objects.get(email=email_colaborador)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Professor colaborador não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+    
+    associacao, criado = Colaborador.objects.get_or_create(professor_id=colaborador.id, projeto_id=id_projeto)
+
+    if criado:
+        return Response({"detail": "Associação criada com sucesso."}, status=status.HTTP_201_CREATED)
+    else:
+        return Response({"detail": "Professor ja é colaborador desse projeto."}, status=status.HTTP_400_BAD_REQUEST)
