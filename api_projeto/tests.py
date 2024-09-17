@@ -86,7 +86,9 @@ class CriarProjetoViewTestCase(APITestCase):
         response = self.client.post(self.url, self.projeto_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['nome'], self.projeto_data['nome'])
-        self.assertEqual(response.data['responsavel'], self.professor.id)
+        self.assertEqual(response.data['responsavel']['id'], self.professor.id)
+        self.assertEqual(response.data['responsavel']['nome'], self.professor.nome)
+        self.assertEqual(response.data['responsavel']['email'], self.professor.email)
 
 
     def test_criar_projeto_nome_vazio(self):
