@@ -6,16 +6,19 @@ from api_professor.serializers import ProfessorSerializer
 
 class ProjetoSerializer(serializers.ModelSerializer):
     data_de_criacao = serializers.DateTimeField(format="%d/%m/%Y")
+    habilidades = serializers.PrimaryKeyRelatedField(many=True, queryset=Habilidade.objects.all(), required=False)
     responsavel = ProfessorSerializer()
     
     class Meta:
         model = Projeto
         fields = '__all__'
 
-class ProjetoSemIdSerializer(serializers.ModelSerializer):    
+class ProjetoSemIdSerializer(serializers.ModelSerializer):
+    habilidades = serializers.PrimaryKeyRelatedField(many=True, queryset=Habilidade.objects.all(), required=False)
+    
     class Meta:
         model = Projeto
-        fields = ['nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel']
+        fields = ['nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel', 'habilidades']
         
 class ProjetoInformacoesSerializer(serializers.ModelSerializer):
     class Meta:
