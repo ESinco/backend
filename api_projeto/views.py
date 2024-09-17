@@ -87,9 +87,7 @@ def criar_projeto_csv(request):
             except Aluno.DoesNotExist:
                 matricula_inexistente.append(matricula)
     
-    return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)
-    
-       
+    return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)           
    
 @api_view(['GET'])
 def get_projetos(request):
