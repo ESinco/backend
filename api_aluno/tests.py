@@ -624,3 +624,136 @@ class AlunoUpdateTests(APITestCase):
 
         response = self.client.put(self.url_editar, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+class AlunoVisualizarPerfilTests(APITestCase):
+    def setUp(self):
+        self.aluno_usuario = User.objects.create_user(
+            username='joao.silva@example.com',
+            email='joao.silva@example.com',
+            password='senhaSegura'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula="123456789",
+            nome="João da Silva",
+            email="joao.silva@example.com",
+            curriculo="Link do curriculo",
+            github="https://github.com/joaosilva",
+            linkedin="https://linkedin.com/in/joaosilva",
+            user=self.aluno_usuario
+        )
+
+        self.habilidade = Habilidade.objects.create(nome='Programação', grupo='Hard Skills')
+        self.experiencia = Experiencia.objects.create(nome='Gestão de Projetos', grupo='Experiências')
+        self.interesse = Interesse.objects.create(nome='Inteligência Artificial', grupo='Interesses')
+        self.habilidade2 = Habilidade.objects.create(nome='Proatividade', grupo='Soft Skills')
+
+        self.aluno.habilidades.add(self.habilidade)
+        self.aluno.experiencias.add(self.experiencia)
+        self.aluno.interesses.add(self.interesse)
+        self.aluno.habilidades.add(self.habilidade2)
+
+        self.feedback = Feedback.objects.create(nome="Criativo", grupo="Feedbacks")
+
+        self.professor_usuario = User.objects.create_user(
+            username='professor@universidade.com',
+            email='professor@universidade.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            user=self.professor_usuario,
+            nome='Professor',
+            email='professor@universidade.com'
+        )
+        self.avaliacao = Avaliacao.objects.create(
+            id_professor=self.professor,
+            id_aluno=self.aluno,
+            comentario='Bom aluno.'
+        )
+        self.avaliacao.tags.add(self.feedback)
+
+        self.data_aluno = {
+            'matricula': '123456789',
+            'nome': 'João da Silva',
+            'email': 'joao.silva@example.com',
+            'curriculo': 'Link do curriculo', 
+            'github': 'https://github.com/joaosilva', 
+            'linkedin': 'https://linkedin.com/in/joaosilva',
+            'user': self.aluno.user,
+            'habilidades': ['Programação', 'Proatividade'], 
+            'experiencias': ['Gestão de Projetos'], 
+            'interesses': ['Inteligência Artificial'],
+        }
+
+        self.data_professor = {
+            'matricula': '123456789',
+            'nome': 'João da Silva', 
+            'email': 'joao.silva@example.com',
+            'curriculo': 'Link do curriculo', 
+            'github': 'https://github.com/joaosilva', 
+            'linkedin': 'https://linkedin.com/in/joaosilva',
+            'user': self.aluno.user,
+            'habilidades': ['Programação', 'Proatividade'], 
+            'experiencias': ['Gestão de Projetos'], 
+            'interesses': ['Inteligência Artificial'],
+            'avaliacao': [{'id_professor': self.professor.id, 'id_aluno': self.aluno.matricula, 
+            'comentario': 'Bom aluno.', 'tags': [{'nome': 'Criativo', 'grupo': 'Feedbacks'}]}]
+        }
+
+        self.url_visualizar = reverse('visualizar_perfil_aluno', kwargs={'matricula': self.aluno.matricula})
+
+    def test_visualizar_perfil_aluno_como_proprio_aluno(self):
+        self.client.force_authenticate(user=self.aluno_usuario)
+        response = self.client.get(self.url_visualizar)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response_data = response.data
+        self.assertEqual(response_data['matricula'], '123456789')
+        self.assertEqual(response_data['nome'], 'João da Silva')
+        self.assertEqual(response_data['email'], 'joao.silva@example.com')
+        self.assertEqual(response_data['curriculo'], 'Link do curriculo')
+        self.assertEqual(response_data['github'], 'https://github.com/joaosilva')
+        self.assertEqual(response_data['linkedin'], 'https://linkedin.com/in/joaosilva')
+        self.assertEqual(response_data['habilidades'], ['Programação', 'Proatividade'])
+        self.assertEqual(response_data['experiencias'], ['Gestão de Projetos'])
+        self.assertEqual(response_data['interesses'], ['Inteligência Artificial'])
+        self.assertNotIn('avaliacao', response_data)
+
+
+    def test_visualizar_perfil_aluno_como_professor(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        response = self.client.get(self.url_visualizar)
+
+        response_data = response.data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_data['matricula'], '123456789')
+        self.assertEqual(response_data['nome'], 'João da Silva')
+        self.assertEqual(response_data['email'], 'joao.silva@example.com')
+        self.assertEqual(response_data['curriculo'], 'Link do curriculo')
+        self.assertEqual(response_data['github'], 'https://github.com/joaosilva')
+        self.assertEqual(response_data['linkedin'], 'https://linkedin.com/in/joaosilva')
+        self.assertEqual(response_data['habilidades'], ['Programação', 'Proatividade'])
+        self.assertEqual(response_data['experiencias'], ['Gestão de Projetos'])
+        self.assertEqual(response_data['interesses'], ['Inteligência Artificial'])
+        self.assertEqual(response_data['avaliacao'], [{'id_professor': 2, 'id_aluno': '123456789', 'comentario': 'Bom aluno.', 'tags': ['Criativo']}])
+
+    def test_visualizar_perfil_aluno_como_outro_aluno(self):
+        outro_usuario = User.objects.create_user(
+            username='outro.aluno@example.com',
+            email='outro.aluno@example.com',
+            password='senhaSegura'
+        )
+        Aluno.objects.create(
+            matricula="987654321",
+            nome="Outro Aluno",
+            email="outro.aluno@example.com",
+            user=outro_usuario
+        )
+        self.client.force_authenticate(user=outro_usuario)
+        response = self.client.get(self.url_visualizar)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_visualizar_perfil_aluno_nao_existe(self):
+        url = reverse('visualizar_perfil_aluno', kwargs={'matricula': '999999999'})
+        self.client.force_authenticate(user=self.aluno_usuario)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
