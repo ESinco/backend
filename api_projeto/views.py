@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.core.mail import send_mail
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -284,3 +285,50 @@ def cadastrar_colaborador(request, id_projeto, email_colaborador):
         return Response({"detail": "Associação criada com sucesso."}, status=status.HTTP_201_CREATED)
     else:
         return Response({"detail": "Professor ja é colaborador desse projeto."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def rejeitar_aluno(request, id_projeto, id_aluno):
+    try:
+        professor = request.user.professor
+    except AttributeError:
+        return Response({"detail": "Acesso negado. Apenas professores podem rejeitar alunos."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        projeto = Projeto.objects.get(pk=id_projeto)
+    except Projeto.DoesNotExist:
+        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        aluno = Aluno.objects.get(pk=id_aluno)
+    except Aluno.DoesNotExist:
+        return Response({"detail": "Aluno não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+    
+    try:
+        associacao = Associacao.objects.get(aluno=id_aluno, projeto=id_projeto)
+    except Associacao.DoesNotExist:
+        return Response({"detail": "Associação não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+    associacao.status = 'Inapto'
+    associacao.save()  
+    
+    assunto = "Resposta de Inscrição no Projeto"
+    mensagem = (
+        f"Olá {aluno.nome},\n\n"
+        f"Agradecemos o seu interesse no projeto {projeto.nome}. "
+        "Infelizmente, você não passou para a próxima etapa.\n\n"
+        "Esperamos vê-lo em outro processo de seleção no futuro!\n\n"
+        "Atenciosamente,\nEquipe do ProjetIn."
+    )
+    destinatario = [aluno.email]
+    
+    send_mail(
+        assunto,
+        mensagem,
+        'projetinufcg@gmail.com',
+        destinatario,
+        fail_silently=False,
+    )
+
+    return Response({"detail": "Aluno rejeitado e email enviado com sucesso."}, status=status.HTTP_200_OK)

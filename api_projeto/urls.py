@@ -14,5 +14,6 @@ path('aluno/', views.get_all_projetos_by_aluno, name='get_all_projetos_by_aluno'
 path('<int:id_projeto>/editar/', views.editar_projeto, name='editar_projeto'),
 path('cadastrar-lista/', views.salvar_filtragem, name='salvar_filtragem'),
 path('editar-lista/<int:id_lista>', views.editar_filtragem, name='editar_filtragem'),
-path('cadastrar_colaborador/<int:id_projeto>/<str:email_colaborador>/',views.cadastrar_colaborador, name='cadastrar_colaborador')
+path('cadastrar_colaborador/<int:id_projeto>/<str:email_colaborador>/',views.cadastrar_colaborador, name='cadastrar_colaborador'),
+path('recusar_aluno/<int:id_projeto>/<int:id_aluno>/',views.rejeitar_aluno,name='recusar_aluno')
 ]
