@@ -203,7 +203,10 @@ class GetProjetoByIdViewTestCase(APITestCase):
         self.professor = Professor.objects.create(nome="Eliane", email="eliane@example.com", user=usuario)
         self.projeto = Projeto.objects.create(nome="Projeto 1", descricao="Descrição 1", laboratorio="Dono 1", vagas=5, responsavel=self.professor)
         self.url = reverse('get_by_id_projeto', kwargs={'id_projeto': self.projeto.id_projeto})
-
+        
+        refresh = RefreshToken.for_user(usuario)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        
     def test_get_by_id_projeto_sucesso(self):
         response = self.client.get(self.url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
