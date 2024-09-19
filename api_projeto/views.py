@@ -222,7 +222,8 @@ def salvar_filtragem(request):
         
         id_projeto = entradas.data['id_projeto']
         projeto = Projeto.objects.get(pk=id_projeto)
-        if not projeto.responsavel.id == professor.id:
+        colaborador = Colaborador.objects.filter(projeto=projeto, professor=professor)
+        if not projeto.responsavel.id == professor.id and not colaborador.exists():
             return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem criar filtros."}, status=status.HTTP_400_BAD_REQUEST)
 
         data = entradas.data.copy()
