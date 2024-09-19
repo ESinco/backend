@@ -298,3 +298,24 @@ def cadastrar_colaborador(request, id_projeto, email_colaborador):
         return Response({"detail": "Associação criada com sucesso."}, status=status.HTTP_201_CREATED)
     else:
         return Response({"detail": "Professor ja é colaborador desse projeto."}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_lista_by_id(request, id_lista):
+    if request.method == 'GET':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            lista = Lista_Filtragem.objects.get(pk=id_lista)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if not lista.id_professor == professor:
+            return Response({"detail": "Apenas o dono da lista pode visualizá-la"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ListaFiltragemSerializer(lista)
+        return Response(serializer.data)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
