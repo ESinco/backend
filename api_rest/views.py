@@ -87,3 +87,12 @@ def get_all_feedbacks(request):
         return Response(serializer.data)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+def get_all_disciplinas(request):
+    if request.method == 'GET':
+        disciplinas = Disciplina.objects.all()
+        serializer = DisciplinaSerializer(disciplinas, many=True)
+        return Response(serializer.data)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
