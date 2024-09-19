@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Experiencia, Interesse, Feedback, Habilidade
+from .models import Experiencia, Interesse, Feedback, Habilidade, Disciplina
 
 
 class HabilidadeSerializer(serializers.ModelSerializer):
@@ -24,3 +24,8 @@ class FeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feedback
         fields = '__all__'
+
+class DisciplinaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Disciplina
+        fields = '__all__'    
