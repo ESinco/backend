@@ -224,7 +224,7 @@ def salvar_filtragem(request):
         projeto = Projeto.objects.get(pk=id_projeto)
         colaborador = Colaborador.objects.filter(projeto=projeto, professor=professor)
         if projeto.responsavel.id != professor.id and not colaborador.exists():
-            return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem criar filtros."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem criar filtros."}, status=status.HTTP_403_FORBIDDEN)
 
         data = entradas.data.copy()
         data['id_professor'] = professor.id
@@ -256,7 +256,7 @@ def editar_filtragem(request, id_lista):
             return Response({"detail": "Lista não encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
         if lista.id_professor.id != professor.id:
-            return Response({"detail": "Apenas o dono da lista pode alterá-la."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Apenas o dono da lista pode alterá-la."}, status=status.HTTP_403_FORBIDDEN)
 
         lista.titulo = entradas.data['titulo']
         lista.filtro_habilidades.set(entradas.data.get('filtro_habilidades', lista.filtro_habilidades.all()))
@@ -278,7 +278,7 @@ def cadastrar_colaborador(request, id_projeto, email_colaborador):
     try:
         professor = Professor.objects.get(user=request.user)
     except Professor.DoesNotExist:
-        return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"detail": "Acesso negado. Apenas professores podem cadastrar colaboradores."}, status=status.HTTP_403_FORBIDDEN)
 
     try:
         projeto = Projeto.objects.get(pk=id_projeto)
@@ -307,7 +307,7 @@ def get_lista_by_id(request, id_lista):
         try:
             professor = Professor.objects.get(user=request.user)
         except Professor.DoesNotExist:
-            return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Acesso negado. Apenas professores podem acessar listas de filtragens."}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             lista = Lista_Filtragem.objects.get(pk=id_lista)
@@ -315,7 +315,7 @@ def get_lista_by_id(request, id_lista):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         if lista.id_professor != professor:
-            return Response({"detail": "Apenas o dono da lista pode visualizá-la"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Apenas o dono da lista pode visualizá-la"}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = ListaFiltragemSerializer(lista)
         return Response(serializer.data)
@@ -328,7 +328,7 @@ def deletar_lista_filtragem(request, id_lista):
         try:
             professor = Professor.objects.get(user=request.user)
         except Professor.DoesNotExist:
-            return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Acesso negado. Apenas professores podem apagar listas."}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             lista = Lista_Filtragem.objects.get(pk=id_lista)
@@ -336,8 +336,46 @@ def deletar_lista_filtragem(request, id_lista):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         if lista.id_professor != professor:
-            return Response({"detail": "Apenas o dono da lista pode apagá-la"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Apenas o dono da lista pode apagá-la"}, status=status.HTTP_403_FORBIDDEN)
 
         lista.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def gerenciar_inscricao(request, id_projeto, id_aluno):
+    if request.method == 'POST':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem gerenciar inscrições."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            projeto = Projeto.objects.get(pk=id_projeto)
+        except:
+            return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        colaborador = Colaborador.objects.filter(projeto=projeto, professor=professor)
+        if projeto.responsavel != professor and not colaborador.exists():
+            return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem gerenciar inscrições."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            aluno = Aluno.objects.get(pk=id_aluno)
+        except Aluno.DoesNotExist:
+            return Response({"detail": "Aluno não encontrado."},
+                status=status.HTTP_404_NOT_FOUND)
+            
+        associacao = Associacao.objects.get(aluno=aluno, projeto=projeto)
+        if not associacao.exists():
+            return Response({"detail": "Essa inscrição não existe."}, status=status.HTTP_404_NOT_FOUND)
+        
+        novo_status = request.data['status']
+        if not novo_status:
+            return Response({"detail": "É necessário enviar um status como parâmetro."}, status=status.HTTP_404_NOT_FOUND)
+        
+        associacao.status = novo_status
+        associacao.save()
+        response = AssociacaoInfoSerializer(associacao).data
+        return Response(response, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
