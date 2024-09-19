@@ -104,16 +104,30 @@ def get_projetos(request):
         return Response(resultados)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_by_id_projeto(request, id_projeto):
     if request.method == 'GET':
         try:
             projeto = Projeto.objects.get(pk=id_projeto)
             serializer = ProjetoSerializer(projeto)
-            data = serializer.data
-            data['quantidade_de_inscritos'] = Associacao.objects.filter(projeto=projeto).count()
-            return Response(data)
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        except Projeto.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND) 
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            professor = None
+            
+        data = serializer.data
+        associacoes = Associacao.objects.filter(projeto=projeto)
+        colaborador = Colaborador.objects.filter(projeto=projeto, professor=professor)
+        if professor and (projeto.responsavel == professor or colaborador.exists()):    
+            listas_de_filtros = Lista_Filtragem.objects.filter(id_projeto=projeto)
+            data['listas_com_filtros'] = ListaFiltragemInfoSerializer(listas_de_filtros, many=True).data
+            
+            data['candidatos'] = AssociacaoInfoSerializer(associacoes, many=True).data
+        
+        data['quantidade_de_inscritos'] = associacoes.count()
+        return Response(data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
