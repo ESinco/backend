@@ -56,9 +56,9 @@ def editar_perfil_aluno(request):
     aluno.github = github
     aluno.linkedin = linkedin
 
-    habilidades_objetos = list(map(lambda habilidade: Habilidade.objects.get(pk=habilidade['nome']), habilidades))
-    experiencias_objetos = list(map(lambda experiencia: Experiencia.objects.get(pk=experiencia['nome']), experiencias))
-    interesses_objetos = list(map(lambda interesse: Interesse.objects.get(pk=interesse['nome']), interesses))
+    habilidades_objetos = list(map(lambda habilidade: Habilidade.objects.get(pk=habilidade), habilidades))
+    experiencias_objetos = list(map(lambda experiencia: Experiencia.objects.get(pk=experiencia), experiencias))
+    interesses_objetos = list(map(lambda interesse: Interesse.objects.get(pk=interesse), interesses))
     aluno.habilidades.set(habilidades_objetos)
     aluno.experiencias.set(experiencias_objetos)
     aluno.interesses.set(interesses_objetos)
