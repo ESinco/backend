@@ -193,7 +193,9 @@ def editar_projeto(request, id_projeto):
         serializer = ProjetoInformacoesSerializer(projeto, data=request.data, partial=(request.method == 'PATCH'))
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            response = ProjetoSerializer(projeto).data
+            response['quantidade_de_inscritos'] = Associacao.objects.filter(projeto=projeto)
+            return Response(response, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
