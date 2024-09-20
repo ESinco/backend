@@ -110,28 +110,26 @@ def get_by_matricula_aluno(request, matricula):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def upload_historico(request):
-    aluno_id = request.data.get('aluno')
+    try:
+        aluno_autenticado = Aluno.objects.get(user=request.user)
+    except Aluno.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas alunos podem cadastrar históricos."}, status=status.HTTP_403_FORBIDDEN)
+    
     historico_pdf = request.FILES.get('historico_pdf')
 
-    if not aluno_id or not historico_pdf or not historico_pdf.size:
+    if not historico_pdf or not historico_pdf.size:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-
     try:
-        aluno = Aluno.objects.get(pk=aluno_id)
-    except Aluno.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    try:
-        historico_antigo = Historico_Academico.objects.filter(aluno=aluno).first()
+        historico_antigo = Historico_Academico.objects.filter(aluno=aluno_autenticado).first()
         if historico_antigo:
             historico_antigo.delete()
 
         novo_historico = Historico_Academico.objects.create(
-            aluno=aluno,
+            aluno=aluno_autenticado,
             historico_pdf=historico_pdf
         )
-        
         atualizar_disciplinas()
         extrair_disciplinas_do_pdf(novo_historico)
         
