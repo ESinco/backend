@@ -1,7 +1,6 @@
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.core.mail import send_mail
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -11,6 +10,7 @@ from rest_framework import status
 
 from .models import *
 from .serializers import *
+from .utils import *
 
 from io import StringIO
 
@@ -380,10 +380,14 @@ def gerenciar_inscricao(request, id_projeto, id_aluno):
         if not enviar_email and not isinstance(enviar_email, bool):
             return Response({"detail": "É necessário decidir se deve enviar um e-mail, através do parâmetro enviar_email: 'True' ou 'False'"}, status=status.HTTP_400_BAD_REQUEST)
         
-        
-        
         associacao.status = novo_status
         associacao.save()
         response = AssociacaoInfoSerializer(associacao).data
+        response['email_enviado'] = False
+        
+        if enviar_email:
+            enviar_email(aluno, projeto, novo_status)
+            response['email_enviado'] = True
+        
         return Response(response, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
