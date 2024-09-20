@@ -8,6 +8,8 @@ from . import views
 
 urlpatterns = [
     path('cadastrar/', views.criar_aluno, name='criar_aluno'),
+    path('test_upload_historico/', views.test_upload_historico, name='test_upload_historico'), # URL DO TEMPLATE CRIADOS SOMENTE PARA TESTE
+    path('test_visu_historico/', views.test_visu_historico, name='test_visu_historico'), # URL DO TEMPLATE CRIADOS SOMENTE PARA TESTE
     path('historico/importar/', views.upload_historico, name='upload_historico'),
     path('historico/<str:matricula>/', views.visualizar_historico, name='visualizar_historico'),
     path('interesse_projeto/<int:projeto_id>/', views.interessar_no_projeto, name='interessar_no_projeto'),

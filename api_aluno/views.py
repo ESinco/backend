@@ -18,6 +18,8 @@ from .models import *
 from .serializers import *
 from api_projeto.models import Projeto, Associacao
 from api_rest.models import *
+from django.shortcuts import render
+from django.http import StreamingHttpResponse
 
 @api_view(['POST'])
 def criar_aluno(request):
@@ -154,12 +156,15 @@ def visualizar_historico(request, matricula):
 
             pdf_path = historico.historico_pdf.path
 
-            try:
-                with open(pdf_path, 'rb') as pdf_file:
-                    response = FileResponse(pdf_file, content_type='application/pdf')
-                    response['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
-                    return response
-            except FileNotFoundError:
+            def file_iterator(file_path, chunk_size=512):
+                with open(file_path, 'rb') as pdf_file:
+                    while chunk := pdf_file.read(chunk_size):
+                        yield chunk
+
+            response = StreamingHttpResponse(file_iterator(pdf_path), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
+            return response
+        except FileNotFoundError:
                 return Response(status=status.HTTP_404_NOT_FOUND)
                 
         except Historico_Academico.DoesNotExist:
@@ -209,3 +214,10 @@ def retirar_interessar_no_projeto(request, projeto_id):
         return Response({"detail": "Associação deletada com sucesso."}, status=status.HTTP_200_OK)
     except:
         return Response({"detail": "Aluno não está associado a este projeto."}, status=status.HTTP_400_BAD_REQUEST)
+
+# VIEW DO TEMPLATE CRIADA SOMENTE PARA TESTE
+def test_upload_historico(request):
+    return render(request, 'upload_historico.html')
+# VIEW DO TEMPLATE CRIADA SOMENTE PARA TESTE
+def test_visu_historico(request):
+    return render(request, 'visualizar_historico.html')
