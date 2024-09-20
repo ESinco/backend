@@ -127,15 +127,18 @@ def get_all_projetos_by_professor(request):
         except:
             return Response({"detail": "O parâmetro 'responsavel' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            projetos = Projeto.objects.filter(responsavel=responsavel)
+            projetos = Projeto.objects.filter(responsavel=responsavel).union(
+                Projeto.objects.filter(colaboradores__professor=responsavel)
+            )
             serializer = ProjetoSerializer(projetos, many=True)
             data = serializer.data
             resultados = [{
                     **item,
-                'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count()
+                'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count(),
                 }
                 for item in data
             ]
+            
             return Response(resultados)
         except Projeto.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
