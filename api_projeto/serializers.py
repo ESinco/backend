@@ -1,19 +1,10 @@
 from rest_framework import serializers
 
-from .models import Projeto, Lista_Filtragem, Associacao
+from .models import Projeto, Lista_Filtragem, Associacao, Colaborador
 from api_rest.models import Habilidade, Experiencia, Interesse
 from api_professor.serializers import ProfessorSerializer
 from api_aluno.serializers import AlunoInformacoesSerializer, AlunoDadosSerializer
-
-
-class ProjetoSerializer(serializers.ModelSerializer):
-    data_de_criacao = serializers.DateTimeField(format="%d/%m/%Y")
-    habilidades = serializers.PrimaryKeyRelatedField(many=True, queryset=Habilidade.objects.all(), required=False)
-    responsavel = ProfessorSerializer()
-    
-    class Meta:
-        model = Projeto
-        fields = '__all__'
+from api_rest.serializers import HabilidadeSerializer, ExperienciaSerializer, FeedbackSerializer, InteresseSerializer
 
 class ProjetoSemIdSerializer(serializers.ModelSerializer):
     habilidades = serializers.PrimaryKeyRelatedField(many=True, queryset=Habilidade.objects.all(), required=False)
@@ -99,9 +90,9 @@ class ListaFiltragemSemIdSerializer(serializers.ModelSerializer):
         fields = ['id_projeto', 'id_professor', 'titulo', 'filtro_habilidades', 'filtro_experiencias', 'filtro_interesses', 'filtro_cra', 'filtro_disciplinas']
         
 class ListaFiltragemSerializer(serializers.ModelSerializer):
-    filtro_habilidades = serializers.PrimaryKeyRelatedField(many=True, queryset=Habilidade.objects.all(), required=False)
-    filtro_experiencias = serializers.PrimaryKeyRelatedField(many=True, queryset=Experiencia.objects.all(), required=False)
-    filtro_interesses = serializers.PrimaryKeyRelatedField(many=True, queryset=Interesse.objects.all(), required=False)
+    filtro_habilidades = HabilidadeSerializer(many=True)
+    filtro_experiencias = ExperienciaSerializer(many=True)
+    filtro_interesses = InteresseSerializer(many=True)
     filtro_disciplinas = serializers.JSONField(required=False)
     filtro_cra = serializers.FloatField(required=False)
 
@@ -134,3 +125,20 @@ class RecomendacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projeto
         fields = ['nome', 'responsavel', 'habilidades', 'data_de_criacao', 'habilidades_em_comum']
+        
+class ColaboradorSerializer(serializers.ModelSerializer):
+    professor = ProfessorSerializer()
+    
+    class Meta:
+        model = Colaborador
+        fields = ['id', 'professor']
+        
+class ProjetoSerializer(serializers.ModelSerializer):
+    data_de_criacao = serializers.DateTimeField(format="%d/%m/%Y")
+    habilidades = HabilidadeSerializer(many=True)
+    responsavel = ProfessorSerializer()
+    colaboradores = ColaboradorSerializer(many=True)
+    
+    class Meta:
+        model = Projeto
+        fields = ['id_projeto', 'nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel', 'habilidades', 'colaboradores']

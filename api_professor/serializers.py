@@ -4,7 +4,7 @@ from .models import Professor
 from api_aluno.models import Avaliacao
 from django.contrib.auth.models import User
 from api_rest.models import Feedback
-
+from api_rest.serializers import FeedbackSerializer
 
 class ProfessorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,7 +28,9 @@ class ProfessorPostSerializer(serializers.ModelSerializer):
         professor = Professor.objects.create(user=usuario, **validated_data)
         return professor
     
-class AvaliacaoSerializer(serializers.ModelSerializer):    
+class AvaliacaoSerializer(serializers.ModelSerializer):
+    tags = FeedbackSerializer(many=True)
+    
     class Meta:
         model = Avaliacao
         fields = '__all__'
@@ -39,6 +41,20 @@ class AvaliacaoSemIdSerializer(serializers.ModelSerializer):
         queryset=Feedback.objects.all(),
         required=False
     )
+    
+    comentario = serializers.CharField(
+        max_length=280,
+        min_length=0,
+        required=False,
+        allow_blank=True
+    )
+    
+    class Meta:
+        model = Avaliacao
+        fields = ['id_professor', 'id_aluno', 'comentario', 'tags']
+        
+class AvaliacaoInformacoesSerializer(serializers.ModelSerializer):   
+    tags = FeedbackSerializer(many=True)
     
     comentario = serializers.CharField(
         max_length=280,

@@ -56,9 +56,9 @@ def editar_perfil_aluno(request):
     aluno.github = github
     aluno.linkedin = linkedin
 
-    habilidades_objetos = list(map(lambda habilidade: Habilidade.objects.get(pk=habilidade['nome']), habilidades))
-    experiencias_objetos = list(map(lambda experiencia: Experiencia.objects.get(pk=experiencia['nome']), experiencias))
-    interesses_objetos = list(map(lambda interesse: Interesse.objects.get(pk=interesse['nome']), interesses))
+    habilidades_objetos = list(map(lambda habilidade: Habilidade.objects.get(pk=habilidade), habilidades))
+    experiencias_objetos = list(map(lambda experiencia: Experiencia.objects.get(pk=experiencia), experiencias))
+    interesses_objetos = list(map(lambda interesse: Interesse.objects.get(pk=interesse), interesses))
     aluno.habilidades.set(habilidades_objetos)
     aluno.experiencias.set(experiencias_objetos)
     aluno.interesses.set(interesses_objetos)
@@ -110,28 +110,26 @@ def get_by_matricula_aluno(request, matricula):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def upload_historico(request):
-    aluno_id = request.data.get('aluno')
+    try:
+        aluno_autenticado = Aluno.objects.get(user=request.user)
+    except Aluno.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas alunos podem cadastrar históricos."}, status=status.HTTP_403_FORBIDDEN)
+    
     historico_pdf = request.FILES.get('historico_pdf')
 
-    if not aluno_id or not historico_pdf or not historico_pdf.size:
+    if not historico_pdf or not historico_pdf.size:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-
     try:
-        aluno = Aluno.objects.get(pk=aluno_id)
-    except Aluno.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    try:
-        historico_antigo = Historico_Academico.objects.filter(aluno=aluno).first()
+        historico_antigo = Historico_Academico.objects.filter(aluno=aluno_autenticado).first()
         if historico_antigo:
             historico_antigo.delete()
 
         novo_historico = Historico_Academico.objects.create(
-            aluno=aluno,
+            aluno=aluno_autenticado,
             historico_pdf=historico_pdf
         )
-        
         atualizar_disciplinas()
         extrair_disciplinas_do_pdf(novo_historico)
         
@@ -210,6 +208,6 @@ def retirar_interessar_no_projeto(request, projeto_id):
     try:
         associacao = Associacao.objects.get(aluno_id=aluno_autenticado.matricula, projeto_id=projeto_id)
         associacao.delete()
-        return Response({"detail": "Associação deletada com sucesso."}, status=status.HTTP_200_OK)
+        return Response({"detail": "Associação deletada com sucesso."}, status=status.HTTP_204_NO_CONTENT)
     except:
         return Response({"detail": "Aluno não está associado a este projeto."}, status=status.HTTP_400_BAD_REQUEST)

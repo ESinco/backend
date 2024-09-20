@@ -5,7 +5,7 @@ from .models import Aluno, Disciplina_Matriculada, Historico_Academico
 from api_rest.models import *
 from api_rest.serializers import *
 from .models import *
-from api_professor.serializers import AvaliacaoSemIdSerializer
+from api_professor.serializers import AvaliacaoInformacoesSerializer
 
 from django.contrib.auth.models import User
 
@@ -28,20 +28,23 @@ class AlunoPostSerializer(serializers.ModelSerializer):
         return aluno
 
 class AlunoPerfilSerializer(serializers.ModelSerializer):
+    habilidades = HabilidadeSerializer(many=True)
+    experiencias = ExperienciaSerializer(many=True)
+    interesses = InteresseSerializer(many=True)
+
     class Meta:
         model = Aluno
         fields = '__all__'
 
 class AlunoPerfilProfessorSerializer(serializers.ModelSerializer):
-    avaliacao = serializers.SerializerMethodField()
+    avaliacao = AvaliacaoInformacoesSerializer(source='avaliacoes', many=True)
+    habilidades = HabilidadeSerializer(many=True)
+    experiencias = ExperienciaSerializer(many=True)
+    interesses = InteresseSerializer(many=True)
 
     class Meta:
         model = Aluno
         fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin', 'habilidades', 'experiencias', 'interesses', 'avaliacao']
-
-    def get_avaliacao(self, obj):
-        avaliacoes = Avaliacao.objects.filter(id_aluno=obj)
-        return AvaliacaoSemIdSerializer(avaliacoes, many=True).data
 
 class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -68,6 +71,9 @@ class DisciplinaMatriculadaNotasSerializer(serializers.ModelSerializer):
 class AlunoDadosSerializer(serializers.ModelSerializer):
     disciplinas_matriculadas = serializers.SerializerMethodField()
     cra = serializers.SerializerMethodField()
+    habilidades = HabilidadeSerializer(many=True)
+    experiencias = ExperienciaSerializer(many=True)
+    interesses = InteresseSerializer(many=True)    
 
     class Meta:
         model = Aluno

@@ -72,5 +72,5 @@ class Lista_Filtragem(models.Model):
 class Colaborador(models.Model):
     id = models.AutoField(primary_key=True)
     professor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
-    projeto = models.ForeignKey(Projeto, null=False, on_delete=models.CASCADE)
+    projeto = models.ForeignKey(Projeto, null=False, on_delete=models.CASCADE, related_name="colaboradores")
     
