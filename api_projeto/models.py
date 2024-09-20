@@ -27,8 +27,13 @@ class Associacao(models.Model):
     id_associacao = models.AutoField(primary_key=True)
     projeto = models.ForeignKey(Projeto, null= False, on_delete=models.CASCADE)
     aluno = models.ForeignKey(Aluno, null=False, on_delete=models.CASCADE)
-    status = models.TextField(null=True)
+    status = models.BooleanField(null=True)
     
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['projeto', 'aluno'], name='unique_projeto_aluno')
+        ]
+
 class Lista_Filtragem(models.Model):
     id_lista = models.AutoField(primary_key=True)
     id_projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE)

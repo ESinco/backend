@@ -105,16 +105,30 @@ def get_projetos(request):
         return Response(resultados)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_by_id_projeto(request, id_projeto):
     if request.method == 'GET':
         try:
             projeto = Projeto.objects.get(pk=id_projeto)
             serializer = ProjetoSerializer(projeto)
-            data = serializer.data
-            data['quantidade_de_inscritos'] = Associacao.objects.filter(projeto=projeto).count()
-            return Response(data)
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        except Projeto.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND) 
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            professor = None
+            
+        data = serializer.data
+        associacoes = Associacao.objects.filter(projeto=projeto)
+        colaborador = Colaborador.objects.filter(projeto=projeto, professor=professor)
+        if professor and (projeto.responsavel == professor or colaborador.exists()):    
+            listas_de_filtros = Lista_Filtragem.objects.filter(id_projeto=projeto)
+            data['listas_com_filtros'] = ListaFiltragemInfoSerializer(listas_de_filtros, many=True).data
+            
+            data['candidatos'] = AssociacaoInfoSerializer(associacoes, many=True).data
+        
+        data['quantidade_de_inscritos'] = associacoes.count()
+        return Response(data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
@@ -209,8 +223,9 @@ def salvar_filtragem(request):
         
         id_projeto = entradas.data['id_projeto']
         projeto = Projeto.objects.get(pk=id_projeto)
-        if not projeto.responsavel.id == professor.id:
-            return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem criar filtros."}, status=status.HTTP_400_BAD_REQUEST)
+        colaborador = Colaborador.objects.filter(projeto=projeto, professor=professor)
+        if projeto.responsavel.id != professor.id and not colaborador.exists():
+            return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem criar filtros."}, status=status.HTTP_403_FORBIDDEN)
 
         data = entradas.data.copy()
         data['id_professor'] = professor.id
@@ -241,8 +256,8 @@ def editar_filtragem(request, id_lista):
         except Lista_Filtragem.DoesNotExist:
             return Response({"detail": "Lista não encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not lista.id_professor.id == professor.id:
-            return Response({"detail": "Apenas o dono da lista pode alterá-la."}, status=status.HTTP_400_BAD_REQUEST)
+        if lista.id_professor.id != professor.id:
+            return Response({"detail": "Apenas o dono da lista pode alterá-la."}, status=status.HTTP_403_FORBIDDEN)
 
         lista.titulo = entradas.data['titulo']
         lista.filtro_habilidades.set(entradas.data.get('filtro_habilidades', lista.filtro_habilidades.all()))
@@ -264,7 +279,7 @@ def cadastrar_colaborador(request, id_projeto, email_colaborador):
     try:
         professor = Professor.objects.get(user=request.user)
     except Professor.DoesNotExist:
-        return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"detail": "Acesso negado. Apenas professores podem cadastrar colaboradores."}, status=status.HTTP_403_FORBIDDEN)
 
     try:
         projeto = Projeto.objects.get(pk=id_projeto)
@@ -285,50 +300,90 @@ def cadastrar_colaborador(request, id_projeto, email_colaborador):
         return Response({"detail": "Associação criada com sucesso."}, status=status.HTTP_201_CREATED)
     else:
         return Response({"detail": "Professor ja é colaborador desse projeto."}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_lista_by_id(request, id_lista):
+    if request.method == 'GET':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem acessar listas de filtragens."}, status=status.HTTP_403_FORBIDDEN)
 
+        try:
+            lista = Lista_Filtragem.objects.get(pk=id_lista)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if lista.id_professor != professor:
+            return Response({"detail": "Apenas o dono da lista pode visualizá-la"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ListaFiltragemSerializer(lista)
+        return Response(serializer.data)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def deletar_lista_filtragem(request, id_lista):
+    if request.method == 'DELETE':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem apagar listas."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            lista = Lista_Filtragem.objects.get(pk=id_lista)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if lista.id_professor != professor:
+            return Response({"detail": "Apenas o dono da lista pode apagá-la"}, status=status.HTTP_403_FORBIDDEN)
+
+        lista.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def rejeitar_aluno(request, id_projeto, id_aluno):
-    try:
-        professor = request.user.professor
-    except AttributeError:
-        return Response({"detail": "Acesso negado. Apenas professores podem rejeitar alunos."}, status=status.HTTP_403_FORBIDDEN)
+def gerenciar_inscricao(request, id_projeto, id_aluno):
+    if request.method == 'POST':
+        try:
+            professor = Professor.objects.get(user=request.user)
+        except Professor.DoesNotExist:
+            return Response({"detail": "Acesso negado. Apenas professores podem gerenciar inscrições."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            projeto = Projeto.objects.get(pk=id_projeto)
+        except:
+            return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-    try:
-        projeto = Projeto.objects.get(pk=id_projeto)
-    except Projeto.DoesNotExist:
-        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        colaborador = Colaborador.objects.filter(projeto=projeto, professor=professor)
+        if projeto.responsavel != professor and not colaborador.exists():
+            return Response({"detail": "Apenas responsáveis ou colaboradores do projeto podem gerenciar inscrições."}, status=status.HTTP_403_FORBIDDEN)
 
-    try:
-        aluno = Aluno.objects.get(pk=id_aluno)
-    except Aluno.DoesNotExist:
-        return Response({"detail": "Aluno não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-    
-    try:
-        associacao = Associacao.objects.get(aluno=id_aluno, projeto=id_projeto)
-    except Associacao.DoesNotExist:
-        return Response({"detail": "Associação não encontrada."}, status=status.HTTP_404_NOT_FOUND)
-
-    associacao.status = 'Inapto'
-    associacao.save()  
-    
-    assunto = "Resposta de Inscrição no Projeto"
-    mensagem = (
-        f"Olá {aluno.nome},\n\n"
-        f"Agradecemos o seu interesse no projeto {projeto.nome}. "
-        "Infelizmente, você não passou para a próxima etapa.\n\n"
-        "Esperamos vê-lo em outro processo de seleção no futuro!\n\n"
-        "Atenciosamente,\nEquipe do ProjetIn."
-    )
-    destinatario = [aluno.email]
-    
-    send_mail(
-        assunto,
-        mensagem,
-        'projetinufcg@gmail.com',
-        destinatario,
-        fail_silently=False,
-    )
-
-    return Response({"detail": "Aluno rejeitado e email enviado com sucesso."}, status=status.HTTP_200_OK)
+        try:
+            aluno = Aluno.objects.get(pk=id_aluno)
+        except Aluno.DoesNotExist:
+            return Response({"detail": "Aluno não encontrado."},
+                status=status.HTTP_404_NOT_FOUND)
+            
+        try:
+            associacao = Associacao.objects.get(aluno=aluno, projeto=projeto)
+        except Associacao.DoesNotExist:
+            return Response({"detail": "Essa inscrição não existe."}, status=status.HTTP_404_NOT_FOUND)
+        
+        novo_status = request.data['status']
+        if not novo_status and not isinstance(novo_status, bool):
+            return Response({"detail": "É necessário enviar um status como parâmetro com o seguinte formato: 'True' ou 'False'"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        enviar_email = request.data['enviar_email']
+        if not enviar_email and not isinstance(enviar_email, bool):
+            return Response({"detail": "É necessário decidir se deve enviar um e-mail, através do parâmetro enviar_email: 'True' ou 'False'"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+        associacao.status = novo_status
+        associacao.save()
+        response = AssociacaoInfoSerializer(associacao).data
+        return Response(response, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

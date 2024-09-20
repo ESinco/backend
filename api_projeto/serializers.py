@@ -1,8 +1,10 @@
 from rest_framework import serializers
 
-from .models import Projeto, Lista_Filtragem
+from .models import Projeto, Lista_Filtragem, Associacao
 from api_rest.models import Habilidade, Experiencia, Interesse
 from api_professor.serializers import ProfessorSerializer
+from api_aluno.serializers import AlunoInformacoesSerializer
+
 
 class ProjetoSerializer(serializers.ModelSerializer):
     data_de_criacao = serializers.DateTimeField(format="%d/%m/%Y")
@@ -106,3 +108,15 @@ class ListaFiltragemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lista_Filtragem
         fields = '__all__'
+        
+class AssociacaoInfoSerializer(serializers.ModelSerializer):
+    aluno = AlunoInformacoesSerializer()
+
+    class Meta:
+        model = Associacao
+        fields = ['id_associacao', 'aluno', 'status']
+        
+class ListaFiltragemInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lista_Filtragem
+        fields = ['id_lista', 'titulo']

@@ -76,17 +76,17 @@ class CriarProjetoViewTestCase(APITestCase):
         )
         self.professor = Professor.objects.create(nome="Fabio", email="fabio@example.com", user=usuario)
         self.url = reverse('criar_projeto')
+        self.habilidade = Habilidade.objects.create(nome='Programação', grupo='Hard Skills')
         self.projeto_data = {
             "nome": "Projeto Teste",
             "descricao": "Descrição do projeto teste",
             "laboratorio": "Dono Teste",
             "vagas": 5,
-            "habilidades": ["Programação"]
+            "habilidades": [self.habilidade.nome]
         }
 
         refresh = RefreshToken.for_user(usuario)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
-        self.habilidade = Habilidade.objects.create(nome='Programação', grupo='Hard Skills')
         
     def test_criar_projeto_sucesso(self):
         response = self.client.post(self.url, self.projeto_data, format='json')
@@ -95,7 +95,7 @@ class CriarProjetoViewTestCase(APITestCase):
         self.assertEqual(response.data['responsavel']['id'], self.professor.id)
         self.assertEqual(response.data['responsavel']['nome'], self.professor.nome)
         self.assertEqual(response.data['responsavel']['email'], self.professor.email)
-        self.assertEqual
+        self.assertEqual(response.data['habilidades'][0], self.habilidade.nome)
 
 
     def test_criar_projeto_nome_vazio(self):
@@ -204,7 +204,10 @@ class GetProjetoByIdViewTestCase(APITestCase):
         self.professor = Professor.objects.create(nome="Eliane", email="eliane@example.com", user=usuario)
         self.projeto = Projeto.objects.create(nome="Projeto 1", descricao="Descrição 1", laboratorio="Dono 1", vagas=5, responsavel=self.professor)
         self.url = reverse('get_by_id_projeto', kwargs={'id_projeto': self.projeto.id_projeto})
-
+        
+        refresh = RefreshToken.for_user(usuario)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        
     def test_get_by_id_projeto_sucesso(self):
         response = self.client.get(self.url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
