@@ -28,4 +28,9 @@ class FeedbackSerializer(serializers.ModelSerializer):
 class DisciplinaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina
-        fields = '__all__'    
+        fields = '__all__'
+        
+class DisciplinaNomeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Disciplina
+        fields = ['nome']
