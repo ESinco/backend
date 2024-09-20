@@ -1,6 +1,6 @@
 from django.core.mail import send_mail
 
-def enviar_email(aluno, projeto, aceito):
+def encaminhar_email(aluno, projeto, aceito):
     if aceito:
         assunto = "Resposta de Inscrição no Projeto"
         mensagem = (

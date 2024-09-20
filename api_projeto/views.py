@@ -386,7 +386,7 @@ def gerenciar_inscricao(request, id_projeto, id_aluno):
         response['email_enviado'] = False
         
         if enviar_email:
-            enviar_email(aluno, projeto, novo_status)
+            encaminhar_email(aluno, projeto, novo_status)
             response['email_enviado'] = True
         
         return Response(response, status=status.HTTP_200_OK)
