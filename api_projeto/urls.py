@@ -17,5 +17,6 @@ path('cadastrar-lista/', views.salvar_filtragem, name='salvar_filtragem'),
 path('editar-lista/<int:id_lista>', views.editar_filtragem, name='editar_filtragem'),
 path('cadastrar_colaborador/<int:id_projeto>/<str:email_colaborador>/',views.cadastrar_colaborador, name='cadastrar_colaborador'),
 path('lista/<int:id_lista>/deletar/',views.deletar_lista_filtragem, name='deletar_lista_filtragem'),
-path('lista/<int:id_lista>/',views.get_lista_by_id, name='get_lista_by_id')
+path('lista/<int:id_lista>/',views.get_lista_by_id, name='get_lista_by_id'),
+path('recomendacao/',views.recomendacao, name='recomendacao')
 ]
