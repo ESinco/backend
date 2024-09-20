@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de Histórico</title>
+</head>
+<body>
+    <h1>Enviar Histórico Acadêmico</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="aluno">Aluno ID:</label>
+        <input type="text" id="aluno" name="aluno" required>
+        
+        <label for="historico_pdf">Histórico Acadêmico (PDF):</label>
+        <input type="file" id="historico_pdf" name="historico_pdf" accept="application/pdf" required>
+
+        <button type="submit">Enviar Histórico</button>
+    </form>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+
+            try {
+                const response = await fetch("/aluno/historico/importar/", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error("Erro ao enviar histórico: " + errorText);
+                }
+
+                alert("Histórico enviado com sucesso!");
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    </script>
+</body>
+</html>

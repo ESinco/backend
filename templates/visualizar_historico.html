@@ -1,0 +1,48 @@
+<!DOCTYPE html> 
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizar Histórico</title>
+</head>
+<body>
+    <h1>Visualizar Histórico</h1>
+    <input type="text" id="matricula" placeholder="Digite a matrícula" required>
+    <button id="visualizar-btn">Visualizar Histórico</button>
+
+    <script>
+        document.getElementById('visualizar-btn').addEventListener('click', async () => {
+            const matricula = document.getElementById('matricula').value;
+            const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzI2ODA2NzExLCJpYXQiOjE3MjY4MDMxMTEsImp0aSI6IjhhZTg2NGFjNTM1MjRmMTM5MjAxZTFmNWUwZGNhZmVhIiwidXNlcl9pZCI6Mn0.0yoC4pe-TKtOBGx_m_tFdrL5EJrrHlhuFgrfQo0zp-c";
+
+            try {
+                const response = await fetch(`/aluno/historico/${matricula}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Erro ao visualizar histórico: ${text}`);
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `historico_${matricula}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                alert('Histórico baixado com sucesso!');
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    </script>
+</body>
+</html>
