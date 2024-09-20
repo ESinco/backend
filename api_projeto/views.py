@@ -90,20 +90,6 @@ def criar_projeto_csv(request):
                 matricula_inexistente.append(matricula)
     
     return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)           
-   
-@api_view(['GET'])
-def get_projetos(request):
-    if request.method == 'GET':
-        projetos = Projeto.objects.all()
-        serializer = ProjetoSerializer(projetos, many=True)
-        data = serializer.data
-        resultados = [{
-                **item,
-                'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count()
-            }
-            for item in data
-        ]
-        return Response(resultados)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
