@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
+from django.db.models import Count, Q
 
 from .models import *
 from .serializers import *
@@ -89,20 +90,6 @@ def criar_projeto_csv(request):
                 matricula_inexistente.append(matricula)
     
     return JsonResponse({'id_projeto': projeto.id_projeto,'matriculas_inexistente': matricula_inexistente}, status=201)           
-   
-@api_view(['GET'])
-def get_projetos(request):
-    if request.method == 'GET':
-        projetos = Projeto.objects.all()
-        serializer = ProjetoSerializer(projetos, many=True)
-        data = serializer.data
-        resultados = [{
-                **item,
-                'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count()
-            }
-            for item in data
-        ]
-        return Response(resultados)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -390,4 +377,30 @@ def gerenciar_inscricao(request, id_projeto, id_aluno):
             response['email_enviado'] = True
         
         return Response(response, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def recomendacao(request):
+    try:
+        aluno = Aluno.objects.get(user=request.user)
+    except Aluno.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas alunos podem ver recomendações de projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'GET':
+        if aluno.habilidades.exists():
+            projetos = Projeto.objects.annotate(
+                habilidades_em_comum=Count('habilidades', filter=Q(habilidades__in=aluno.habilidades.all()))
+            ).order_by('-habilidades_em_comum', '-data_de_criacao')
+        else:
+            projetos = Projeto.objects.all().order_by('-data_de_criacao')
+
+        serializer = ProjetoSerializer(projetos, many=True)
+        resultados = [{
+            **item,
+            'quantidade_de_inscritos': Associacao.objects.filter(projeto=item['id_projeto']).count()
+        } for item in serializer.data]
+
+        return Response(resultados)
+
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
