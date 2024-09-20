@@ -52,15 +52,35 @@ class AlunoInformacoesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = ['matricula', 'nome', 'email']
-
+        
 class DisciplinaMatriculadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina_Matriculada
         fields = '__all__'
 
-class HistoricoAcademicoSerializer(serializers.ModelSerializer):
-    disciplinas = DisciplinaMatriculadaSerializer(many=True, read_only=True)
+class DisciplinaMatriculadaNotasSerializer(serializers.ModelSerializer):
+    disciplina = DisciplinaNomeSerializer()
+    
+    class Meta:
+        model = Disciplina_Matriculada
+        fields = ['id', 'disciplina', 'media']
+
+class AlunoDadosSerializer(serializers.ModelSerializer):
+    disciplinas_matriculadas = serializers.SerializerMethodField()
+    cra = serializers.SerializerMethodField()
 
     class Meta:
-        model = Historico_Academico
-        fields = ['id', 'aluno', 'historico_pdf', 'cra', 'disciplinas_matriculadas']
+        model = Aluno
+        fields = ['matricula', 'nome', 'email', 'disciplinas_matriculadas', 'cra', 'habilidades', 'experiencias', 'interesses']
+
+    def get_disciplinas_matriculadas(self, obj):
+        historico = obj.historicos.first()
+        if historico:
+            return DisciplinaMatriculadaNotasSerializer(historico.disciplinas_matriculadas, many=True).data
+        return []
+
+    def get_cra(self, obj):
+        historico = obj.historicos.first()
+        if historico:
+            return historico.cra
+        return None
