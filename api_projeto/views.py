@@ -366,13 +366,14 @@ def gerenciar_inscricao(request, id_projeto, id_aluno):
             return Response({"detail": "Aluno não encontrado."},
                 status=status.HTTP_404_NOT_FOUND)
             
-        associacao = Associacao.objects.get(aluno=aluno, projeto=projeto)
-        if not associacao.exists():
+        try:
+            associacao = Associacao.objects.get(aluno=aluno, projeto=projeto)
+        except Associacao.DoesNotExist:
             return Response({"detail": "Essa inscrição não existe."}, status=status.HTTP_404_NOT_FOUND)
         
         novo_status = request.data['status']
         if not novo_status:
-            return Response({"detail": "É necessário enviar um status como parâmetro."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "É necessário enviar um status como parâmetro com o seguinte formato: 'True', 'False', null."}, status=status.HTTP_400_BAD_REQUEST)
         
         associacao.status = novo_status
         associacao.save()
