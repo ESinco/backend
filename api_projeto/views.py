@@ -125,7 +125,7 @@ def get_by_id_projeto(request, id_projeto):
             listas_de_filtros = Lista_Filtragem.objects.filter(id_projeto=projeto)
             data['listas_com_filtros'] = ListaFiltragemInfoSerializer(listas_de_filtros, many=True).data
             
-            data['candidatos'] = AssociacaoInfoSerializer(associacoes, many=True).data
+            data['candidatos'] = AssociacaoCompletaSerializer(associacoes, many=True).data
         
         data['quantidade_de_inscritos'] = associacoes.count()
         return Response(data)
