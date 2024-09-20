@@ -5,7 +5,7 @@ from .models import Aluno, Disciplina_Matriculada, Historico_Academico
 from api_rest.models import *
 from api_rest.serializers import *
 from .models import *
-from api_professor.serializers import AvaliacaoSemIdSerializer
+from api_professor.serializers import AvaliacaoInformacoesSerializer
 
 from django.contrib.auth.models import User
 
@@ -37,7 +37,7 @@ class AlunoPerfilSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AlunoPerfilProfessorSerializer(serializers.ModelSerializer):
-    avaliacao = AvaliacaoSemIdSerializer(source='avaliacoes', many=True)
+    avaliacao = AvaliacaoInformacoesSerializer(source='avaliacoes', many=True)
     habilidades = HabilidadeSerializer(many=True)
     experiencias = ExperienciaSerializer(many=True)
     interesses = InteresseSerializer(many=True)
