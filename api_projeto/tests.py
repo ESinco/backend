@@ -16,6 +16,7 @@ from api_projeto.models import Projeto, Associacao, Colaborador
 from api_professor.models import Professor
 from api_aluno.models import Aluno
 from api_projeto.views import *
+from allauth.account.models import EmailAddress
 
 from io import StringIO
 import os
@@ -259,12 +260,14 @@ class CriarProjetoCSVTestCase(APITestCase):
         # Criar usuário e professor autenticado
         self.user = User.objects.create_user(username='professor@teste.com', password='senha123')
         self.professor = Professor.objects.create(user=self.user, nome='Professor Teste', email='professor@teste.com')
-        
+        usuario = User.objects.create_user(username='aluno1@teste.com', password='senha123')
         # Criar alunos
-        self.aluno1 = Aluno.objects.create(user=User.objects.create_user(username='aluno1@teste.com', password='senha123'),
-                                           matricula='123456789', nome='Aluno 1', email='aluno1@teste.com')
-        self.aluno2 = Aluno.objects.create(user=User.objects.create_user(username='aluno2@teste.com', password='senha123'),
-                                           matricula='987654321', nome='Aluno 2', email='aluno2@teste.com')
+        self.aluno1 = Aluno.objects.create(user=usuario,matricula='123456789', nome='Aluno 1', email='aluno1@teste.com')        
+        EmailAddress.objects.create(user=usuario, email=usuario.email, verified=True, primary=True)
+        usuario = User.objects.create_user(username='gabriel@teste.com', password='senha123')
+        self.aluno2 = Aluno.objects.create(user=usuario,matricula='987654321', nome='Aluno 2', email='aluno2@teste.com')
+        EmailAddress.objects.create(user=usuario, email='gabriel@teste.com', verified=True, primary=True)
+
         
         self.url = reverse('criar_projeto_csv')
         self.client.force_authenticate(user=self.user)  # Autenticar como o professor

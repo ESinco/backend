@@ -51,7 +51,11 @@ INSTALLED_APPS = [
     'pdfplumber',
     'rest_framework_simplejwt',
     'pytz',
-    'requests'
+    'requests',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount'
 ]
 
 REST_FRAMEWORK = {
@@ -80,6 +84,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware', 
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -110,7 +115,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ProjetIn',
+        'NAME': 'ProjetIn-db',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
@@ -178,3 +183,19 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'projetinufcg@gmail.com'
 EMAIL_HOST_PASSWORD = 'nasn pqec otrc rxyq'
 DEFAULT_FROM_EMAIL = 'projetinufcg@gmail.com'
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+# Configurações do Django Allauth
+SITE_ID = 1  # O ID do site que você criou no Django Admin
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # A verificação de email é obrigatória
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirma o email quando o link é acessado
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_SUBJECT_PREFIX = 'Confirmação de email'
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = None
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = None
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 99999

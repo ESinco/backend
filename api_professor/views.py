@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.utils import timezone
+from allauth.account.models import EmailAddress
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -21,6 +22,16 @@ def criar_professor(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
         
         professor = serializer.save()
+        
+        usuario = professor.user 
+        email_address = EmailAddress.objects.create(
+            user=usuario,
+            email=usuario.email,
+            verified=False,
+            primary=True,
+        )
+        
+        email_address.send_confirmation(request)
         response_serializer = ProfessorSerializer(professor)
         
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)

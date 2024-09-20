@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from django.shortcuts import render
+from allauth.account.models import EmailAddress
+
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -30,6 +32,9 @@ def login(request):
     if not usuario.check_password(senha):
         return Response({"detail": "Senha incorreta."}, status=status.HTTP_401_UNAUTHORIZED)
 
+    if not EmailAddress.objects.filter(user=usuario, verified=True).exists():
+        return Response({"detail": "Email não confirmado."}, status=status.HTTP_403_FORBIDDEN)
+    
     response = {}
     isTeacher = True
     try:

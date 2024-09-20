@@ -10,6 +10,8 @@ from api_professor.models import Professor
 from api_projeto.models import Projeto
 from api_rest.models import *
 
+from allauth.account.models import EmailAddress
+
 import os
 
 
@@ -27,6 +29,7 @@ class AlunoModelTestCase(TestCase):
             email='andre@example.com',
             user=self.usuario
         )
+        EmailAddress.objects.create(user=self.usuario, email=self.usuario.email, verified=True, primary=True)
 
     def test_aluno_creation(self):
         self.assertEqual(self.aluno.matricula, '121210210')
@@ -176,12 +179,15 @@ class getAlunoPorMatriculaTestCase(APITestCase):
             password='213'
         )
         self.aluno1 = Aluno.objects.create(matricula = "121210110", nome="Andre", email="andre@example.com", user=usuario)
+        EmailAddress.objects.create(user=usuario, email=usuario.email, verified=True, primary=True)
+        
         usuario = User.objects.create_user(
             username='rian@example.com',
             email='rian@example.com',
             password='213'
         )
         self.aluno2 = Aluno.objects.create(matricula = "121210210", nome="Rian", email="rian@example.com", user=usuario)
+        EmailAddress.objects.create(user=usuario, email=usuario.email, verified=True, primary=True)
 
     def test_get_aluno_by_matricula_sucesso1(self):
         url = reverse('get_by_matricula_aluno', kwargs={'matricula': self.aluno1.matricula})
@@ -220,6 +226,7 @@ class HistoricoAcademicoTests(APITestCase):
             linkedin="https://linkedin.com/in/joaosilva",
             user=cls.usuario
         )
+        EmailAddress.objects.create(user=cls.usuario, email=cls.usuario.email, verified=True, primary=True)
         cls.url_upload = reverse('upload_historico')
         cls.pdf_path = os.path.join(os.path.dirname(__file__), 'test_data', 'historico.pdf')
 
@@ -322,6 +329,7 @@ class HistoricoAcademicoTests(APITestCase):
             nome='Professor',
             email='professor@universidade.com'
         )
+        EmailAddress.objects.create(user=professor_usuario, email=professor_usuario.email, verified=True, primary=True)
         self.test_upload_historico()
 
         self.client.force_authenticate(user=professor_usuario)
@@ -348,6 +356,8 @@ class HistoricoAcademicoTests(APITestCase):
             linkedin="https://linkedin.com/in/outroaluno",
             user=outro_usuario
         )
+        EmailAddress.objects.create(user=outro_usuario, email=outro_usuario.email, verified=True, primary=True)
+
         self.client.force_authenticate(user=outro_usuario)
         response = self.client.get(self.url_visualizar)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -377,10 +387,11 @@ class HistoricoAcademicoTests(APITestCase):
 class InteresseNoProjetoTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username='aluno@teste.com', password='senha123')
-        self.aluno = Aluno.objects.create(user=self.user, matricula='123456789', nome='Aluno Teste', email='aluno@teste.com')
-        self.userP = User.objects.create_user(username='professor@teste.com', password='senha123')
-        self.professor = Professor.objects.create(user=self.userP, nome='Professor Teste', email='professor@teste.com')
+        self.user = User.objects.create_user(username='aluno1@teste.com', password='senha123')
+        self.aluno = Aluno.objects.create(user=self.user, matricula='123456789', nome='Aluno Teste', email='aluno1@teste.com')
+        
+        self.userP = User.objects.create_user(username='professor1@teste.com', password='senha123')
+        self.professor = Professor.objects.create(user=self.userP, nome='Professor Teste', email='professor1@teste.com')
         
         self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor)
 
@@ -444,10 +455,10 @@ class InteresseNoProjetoTests(TestCase):
 class DeleteInteressarNoProjetoTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username='beatriz@teste.com', password='senha123')
-        self.aluno = Aluno.objects.create(user=self.user, matricula='987654321', nome='Beatriz', email='beatriz@teste.com')
-        self.userP = User.objects.create_user(username='joseane@teste.com', password='senha123')
-        self.professor = Professor.objects.create(user=self.userP, nome='Joseane', email='joseane@teste.com')
+        self.user = User.objects.create_user(username='beatriz1@teste.com', password='senha123')
+        self.aluno = Aluno.objects.create(user=self.user, matricula='987654321', nome='Beatriz', email='beatriz1@teste.com')
+        self.userP = User.objects.create_user(username='joseane1@teste.com', password='senha123')
+        self.professor = Professor.objects.create(user=self.userP, nome='Joseane', email='joseane1@teste.com')
 
         self.projeto = Projeto.objects.create(nome='Projeto Teste', data_de_criacao=timezone.now(), responsavel=self.professor)
 
@@ -505,6 +516,7 @@ class AlunoUpdateTests(APITestCase):
             linkedin="https://linkedin.com/in/joaosilva",
             user=self.usuario
         )
+        EmailAddress.objects.create(user=self.usuario, email=self.usuario.email, verified=True, primary=True)
         self.url_editar = reverse('editar_perfil_aluno')
         self.client.force_authenticate(user=self.usuario)
 
@@ -619,6 +631,7 @@ class AlunoUpdateTests(APITestCase):
             email='testuser@example.com',
             password='senhaSegura'
         )
+        EmailAddress.objects.create(user=outro_usuario, email=outro_usuario.email, verified=True, primary=True)
         self.client.force_authenticate(user=outro_usuario)
         self.aluno.delete()
 
@@ -641,6 +654,7 @@ class AlunoVisualizarPerfilTests(APITestCase):
             linkedin="https://linkedin.com/in/joaosilva",
             user=self.aluno_usuario
         )
+        EmailAddress.objects.create(user=self.aluno_usuario, email=self.aluno_usuario.email, verified=True, primary=True)
 
         self.habilidade = Habilidade.objects.create(nome='Programação', grupo='Hard Skills')
         self.experiencia = Experiencia.objects.create(nome='Gestão de Projetos', grupo='Experiências')
@@ -659,6 +673,8 @@ class AlunoVisualizarPerfilTests(APITestCase):
             email='professor@universidade.com',
             password='senhaSegura'
         )
+        EmailAddress.objects.create(user=self.professor_usuario, email=self.professor_usuario.email, verified=True, primary=True)
+
         self.professor = Professor.objects.create(
             user=self.professor_usuario,
             nome='Professor',

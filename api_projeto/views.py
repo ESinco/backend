@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from allauth.account.models import EmailAddress
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -84,7 +85,10 @@ def criar_projeto_csv(request):
         if matricula:
             try:
                 aluno = Aluno.objects.get(pk=matricula)
-                Associacao.objects.create(projeto_id=projeto.id_projeto, aluno_id=aluno.matricula, status=None)
+                if not EmailAddress.objects.filter(user=aluno.user, verified=True).exists():
+                    matricula_inexistente.append(matricula)
+                else:
+                    Associacao.objects.create(projeto_id=projeto.id_projeto, aluno_id=aluno.matricula, status=None)
             except Aluno.DoesNotExist:
                 matricula_inexistente.append(matricula)
     

@@ -20,6 +20,8 @@ class LoginTestCase(APITestCase):
             email='andre@example.com',
             user=usuario_professor
         )
+        EmailAddress.objects.create(user=usuario_professor, email='andre@example.com', verified=True, primary=True)
+
         self.login_professor = {
             "email" : "andre@example.com",
             "senha" : "1234"
@@ -36,6 +38,7 @@ class LoginTestCase(APITestCase):
             email='andre1@example.com',
             user=usuario_aluno
         )
+        EmailAddress.objects.create(user=usuario_aluno, email='andre1@example.com', verified=True, primary=True)
         self.login_aluno = {
             "email" : "andre1@example.com",
             "senha" : "1234"

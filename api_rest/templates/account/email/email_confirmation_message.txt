@@ -1,0 +1,7 @@
+Olá {{ user.username }},
+
+Por favor, clique no link abaixo para confirmar seu email:
+
+{{ activate_url }}
+
+Se você não se inscreveu neste site, ignore este email.
