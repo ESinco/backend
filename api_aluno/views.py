@@ -208,6 +208,6 @@ def retirar_interessar_no_projeto(request, projeto_id):
     try:
         associacao = Associacao.objects.get(aluno_id=aluno_autenticado.matricula, projeto_id=projeto_id)
         associacao.delete()
-        return Response({"detail": "Associação deletada com sucesso."}, status=status.HTTP_200_OK)
+        return Response({"detail": "Associação deletada com sucesso."}, status=status.HTTP_204_NO_CONTENT)
     except:
         return Response({"detail": "Aluno não está associado a este projeto."}, status=status.HTTP_400_BAD_REQUEST)
