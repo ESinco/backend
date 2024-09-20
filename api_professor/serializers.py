@@ -53,6 +53,20 @@ class AvaliacaoSemIdSerializer(serializers.ModelSerializer):
         model = Avaliacao
         fields = ['id_professor', 'id_aluno', 'comentario', 'tags']
         
+class AvaliacaoInformacoesSerializer(serializers.ModelSerializer):   
+    tags = FeedbackSerializer(many=True)
+    
+    comentario = serializers.CharField(
+        max_length=280,
+        min_length=0,
+        required=False,
+        allow_blank=True
+    )
+    
+    class Meta:
+        model = Avaliacao
+        fields = ['id_professor', 'id_aluno', 'comentario', 'tags']
+        
 class AvaliacaoPostSerializer(serializers.ModelSerializer):
     tags = serializers.ListField(
         child=serializers.CharField(max_length=100),
