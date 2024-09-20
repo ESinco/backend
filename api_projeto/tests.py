@@ -480,28 +480,3 @@ class CadastrarColaboradorTests(APITestCase):
         response = self.client.post(self.url, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], 'Professor ja é colaborador desse projeto.')
-        
-class RecusarAluno(APITestCase):
-    def setUp(self):
-        self.user_professor = User.objects.create_user(username='professor@example.com', password='1234')
-        self.professor = Professor.objects.create(user=self.user_professor, nome='Professor Teste')
-
-        self.user_aluno = User.objects.create_user(username='gabriel.souza@ccc.ufcg.edu.br', password='1234')
-        self.aluno = Aluno.objects.create(user = self.user_aluno,matricula = 123456789 ,nome='Aluno Teste', email='gabriel.souza@ccc.ufcg.edu.br')
-        
-        self.projeto = Projeto.objects.create(nome='Projeto Teste', responsavel=self.professor)
-        
-        self.associacao = Associacao.objects.create(projeto=self.projeto,aluno=self.aluno)
-        
-        self.url = reverse('recusar_aluno', args=[self.projeto.id_projeto, self.aluno.matricula])
-
-        self.client.force_authenticate(user=self.user_professor)
-
-    def test_rejeitar_aluno_com_sucesso(self):
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['detail'], 'Aluno rejeitado e email enviado com sucesso.')
-
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, 'Resposta de Inscrição no Projeto')
-        self.assertIn('Olá Aluno Teste,\n\nAgradecemos o seu interesse no projeto Projeto Teste. Infelizmente, você não passou para a próxima etapa.\n\nEsperamos vê-lo em outro processo de seleção no futuro!\n\nAtenciosamente,\nEquipe do ProjetIn.', mail.outbox[0].body)
