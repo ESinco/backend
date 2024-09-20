@@ -10,6 +10,7 @@ from rest_framework import status
 
 from .models import *
 from .serializers import *
+from .utils import *
 
 from io import StringIO
 
@@ -372,11 +373,21 @@ def gerenciar_inscricao(request, id_projeto, id_aluno):
             return Response({"detail": "Essa inscrição não existe."}, status=status.HTTP_404_NOT_FOUND)
         
         novo_status = request.data['status']
-        if not novo_status:
-            return Response({"detail": "É necessário enviar um status como parâmetro com o seguinte formato: 'True', 'False', null."}, status=status.HTTP_400_BAD_REQUEST)
+        if not novo_status and not isinstance(novo_status, bool):
+            return Response({"detail": "É necessário enviar um status como parâmetro com o seguinte formato: 'True' ou 'False'"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        enviar_email = request.data['enviar_email']
+        if not enviar_email and not isinstance(enviar_email, bool):
+            return Response({"detail": "É necessário decidir se deve enviar um e-mail, através do parâmetro enviar_email: 'True' ou 'False'"}, status=status.HTTP_400_BAD_REQUEST)
         
         associacao.status = novo_status
         associacao.save()
         response = AssociacaoInfoSerializer(associacao).data
+        response['email_enviado'] = False
+        
+        if enviar_email:
+            encaminhar_email(aluno, projeto, novo_status)
+            response['email_enviado'] = True
+        
         return Response(response, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

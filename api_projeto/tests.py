@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 from datetime import datetime
+from django.core import mail
 
 from api_projeto.models import Projeto, Associacao, Colaborador
 from api_professor.models import Professor
