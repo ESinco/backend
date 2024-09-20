@@ -120,3 +120,10 @@ class ListaFiltragemInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lista_Filtragem
         fields = ['id_lista', 'titulo']
+        
+class RecomendacaoSerializer(serializers.ModelSerializer):
+    habilidades_em_comum = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Projeto
+        fields = ['nome', 'responsavel', 'habilidades', 'data_de_criacao', 'habilidades_em_comum']
