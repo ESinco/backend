@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import Projeto, Lista_Filtragem, Associacao
 from api_rest.models import Habilidade, Experiencia, Interesse
 from api_professor.serializers import ProfessorSerializer
-from api_aluno.serializers import AlunoInformacoesSerializer
+from api_aluno.serializers import AlunoInformacoesSerializer, AlunoDadosSerializer
 
 
 class ProjetoSerializer(serializers.ModelSerializer):
@@ -111,6 +111,13 @@ class ListaFiltragemSerializer(serializers.ModelSerializer):
         
 class AssociacaoInfoSerializer(serializers.ModelSerializer):
     aluno = AlunoInformacoesSerializer()
+
+    class Meta:
+        model = Associacao
+        fields = ['id_associacao', 'aluno', 'status']
+
+class AssociacaoCompletaSerializer(serializers.ModelSerializer):
+    aluno = AlunoDadosSerializer()
 
     class Meta:
         model = Associacao
