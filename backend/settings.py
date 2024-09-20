@@ -110,7 +110,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ProjetIn-db',
+        'NAME': 'ProjetIn',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
@@ -176,5 +176,5 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'projetinufcg@gmail.com'
-EMAIL_HOST_PASSWORD = 'projetinufcg10'
+EMAIL_HOST_PASSWORD = ''
 DEFAULT_FROM_EMAIL = 'projetinufcg@gmail.com'
