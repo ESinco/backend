@@ -549,7 +549,7 @@ class RecomendacaoTests(APITestCase):
         self.habilidade2 = Habilidade.objects.create(nome="Pensamento Criativo", grupo="Soft Skills")
         self.habilidade3 = Habilidade.objects.create(nome="Inteligência Artificial", grupo="Hard Skills")
         self.habilidade4 = Habilidade.objects.create(nome="Desenvolvimento Mobile", grupo="Hard Skills")
-        self.habilidade5= Habilidade.objects.create(nome="Testes", grupo="Hard Skills")
+        self.habilidade5 = Habilidade.objects.create(nome="Testes", grupo="Hard Skills")
         self.habilidade6 = Habilidade.objects.create(nome="Negociação", grupo="Soft Skills")
 
         self.projeto1 = Projeto.objects.create(
@@ -577,6 +577,7 @@ class RecomendacaoTests(APITestCase):
             nome='Projeto 4',
             descricao='Descrição do Projeto 4',
             laboratorio='Laboratório 4',
+            data_de_criacao=datetime(2023, 9, 21, 12, 30, tzinfo=pytz.UTC),
             vagas=5,
             responsavel=self.professor1
         )
@@ -603,8 +604,8 @@ class RecomendacaoTests(APITestCase):
         self.assertEqual(response.data[0]['id_projeto'], self.projeto1.id_projeto)
         self.assertEqual(response.data[1]['id_projeto'], self.projeto5.id_projeto)
         self.assertEqual(response.data[2]['id_projeto'], self.projeto2.id_projeto)
-        self.assertEqual(response.data[3]['id_projeto'], self.projeto4.id_projeto)
-        self.assertEqual(response.data[4]['id_projeto'], self.projeto3.id_projeto)
+        self.assertEqual(response.data[3]['id_projeto'], self.projeto3.id_projeto)
+        self.assertEqual(response.data[4]['id_projeto'], self.projeto4.id_projeto)
 
     def test_recomendacao_aluno_sem_recomendacoes(self):
         self.aluno.habilidades.add(self.habilidade5, self.habilidade6)
