@@ -1,197 +1,98 @@
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import User
-from django.utils import timezone
+from django.shortcuts import render
 
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import *
+from api_professor.serializers import ProfessorSerializer
+from api_professor.models import Professor
+from api_aluno.models import Aluno
+from api_aluno.serializers import AlunoInformacoesSerializer
 from rest_framework import status
 
-from .models import Professor, Aluno
 from .serializers import *
 
-import time
-import json
 
 @api_view(['POST'])
-def criar_professor(request):
-    if request.method == 'POST':
-        serializer = ProfessorPostSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
-        
-        professor = serializer.save()
-        response_serializer = ProfessorSerializer(professor)
-        
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-@api_view(['GET'])
-def get_professores(request):
-    if request.method == 'GET':
-        professores = Professor.objects.all()
-        serializer = ProfessorSerializer(professores, many=True)
-        return Response(serializer.data)
-
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-@api_view(['GET'])
-def get_by_id_professor(request, id_professor):
-    try:
-        professor = Professor.objects.get(pk=id_professor)
-    except:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = ProfessorSerializer(professor)
-        return Response(serializer.data)
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-@api_view(['POST'])
-def login_professor(request):
+def login(request):
     email = request.data.get('email')
     senha = request.data.get('senha')
 
+    if not email or not senha:
+        return Response({"detail": "Email e senha são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        user = User.objects.get(email=email)
+        usuario = User.objects.get(email=email)
     except User.DoesNotExist:
-        return Response({"detail": "Professor não encontrado."}, status=404)
+        return Response({"detail": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
+    if not usuario.check_password(senha):
+        return Response({"detail": "Senha incorreta."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    response = {}
+    isTeacher = True
     try:
-        professor = Professor.objects.get(user=user)
+        professor = Professor.objects.get(user=usuario)
+        response = ProfessorSerializer(professor).data
     except Professor.DoesNotExist:
-        return Response({"detail": "Professor não encontrado."}, status=404)
-
-    if not user.check_password(senha):
-        return Response({"detail": "Senha incorreta."}, status=401)
-
-    refresh = RefreshToken.for_user(user)
-
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    })
-
-@api_view(['POST'])
-def criar_aluno(request):
-    if request.method == 'POST':
-        serializer = AlunoPostSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
-        
-        aluno = serializer.save()
-        response_serializer = AlunoSerializer(aluno)
-        
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-@api_view(['GET'])
-def get_all_alunos(request):
-    if request.method == 'GET':
-        alunos = Aluno.objects.all()
-        serializer = AlunoSerializer(alunos, many=True)
-        return Response(serializer.data)
-
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-@api_view(['GET'])
-def get_by_matricula_aluno(request, matricula):
-    try:
-        aluno = Aluno.objects.get(pk=matricula)
-    except:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = AlunoSerializer(aluno)
-        return Response(serializer.data)
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-@api_view(['POST'])
-def login_aluno(request):
-    email = request.data.get('email')
-    senha = request.data.get('senha')
-
-    try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({"detail": "Aluno não encontrado."}, status=404)
-
-    try:
-        aluno = Aluno.objects.get(user=user)
-    except Aluno.DoesNotExist:
-        return Response({"detail": "Aluno não encontrado."}, status=404)
+        try:
+            aluno = Aluno.objects.get(user=usuario)
+            isTeacher = False
+            response = AlunoInformacoesSerializer(aluno).data
+        except Aluno.DoesNotExist:
+            return Response({"detail": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
     
-    if not user.check_password(senha):
-        return Response({"detail": "Senha incorreta."}, status=401)
+    refresh = RefreshToken.for_user(usuario)
+    response['isTeacher'] = isTeacher
+    response['refresh'] = str(refresh)
+    response['access'] = str(refresh.access_token)
 
-    refresh = RefreshToken.for_user(user)
-
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    })
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def criar_projeto(request):
-    try:
-        professor_autenticado = Professor.objects.get(user=request.user)
-    except Professor.DoesNotExist:
-        return Response({"detail": "Acesso negado. Apenas professores podem criar projetos."}, status=status.HTTP_403_FORBIDDEN)
-
-    if request.method == 'POST':
-        serializer = ProjetoPostSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        data = request.data.copy()
-        data['responsavel'] = professor_autenticado.id
-        
-        data['data_de_criacao'] = timezone.now()
-        
-        serializer = ProjetoSemIdSerializer(data=data)
-        if serializer.is_valid():
-            projeto = serializer.save()
-            response_serializer = ProjetoSerializer(projeto)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    return Response(response)
 
 @api_view(['GET'])
-def get_projetos(request):
+def get_all_habilidades(request):
     if request.method == 'GET':
-        projetos = Projeto.objects.all()
-        serializer = ProjetoSerializer(projetos, many=True)
+        habilidades = Habilidade.objects.all()
+        serializer = HabilidadeSerializer(habilidades, many=True)
         return Response(serializer.data)
 
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
 @api_view(['GET'])
-def get_by_id_projeto(request, id_projeto):
+def get_all_experiencias(request):
     if request.method == 'GET':
-        try:
-            projeto = Projeto.objects.get(pk=id_projeto)
-            serializer = ProjetoSerializer(projeto)
-            return Response(serializer.data)
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        experiencias = Experiencia.objects.all()
+        serializer = ExperienciaSerializer(experiencias, many=True)
+        return Response(serializer.data)
+
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
-def get_all_projetos_by_professor(request):
+def get_all_interesses(request):
     if request.method == 'GET':
-        try:
-            responsavel_id = request.GET.get('responsavel')
-            responsavel = Professor.objects.get(pk=responsavel_id)
-        except:
-            return Response({"detail": "O parâmetro 'responsavel' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            projetos = Projeto.objects.filter(responsavel=responsavel)
-            serializer = ProjetoSerializer(projetos, many=True)
-            return Response(serializer.data)
-        except Projeto.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED) 
+        interesses = Interesse.objects.all()
+        serializer = InteresseSerializer(interesses, many=True)
+        return Response(serializer.data)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['GET'])
+def get_all_feedbacks(request):
+    if request.method == 'GET':
+        feedbacks = Feedback.objects.all()
+        serializer = FeedbackSerializer(feedbacks, many=True)
+        return Response(serializer.data)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+def get_all_disciplinas(request):
+    if request.method == 'GET':
+        disciplinas = Disciplina.objects.all()
+        serializer = DisciplinaSerializer(disciplinas, many=True)
+        return Response(serializer.data)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

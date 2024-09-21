@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class ApiRestConfig(AppConfig):
+class ApiProfessorConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'api_rest'
+    name = 'api_professor'

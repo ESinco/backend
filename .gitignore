@@ -3,7 +3,7 @@ __pycache__/
 backend/__pycache__/
 *.py[cod]
 *$py.class
-test.rest
+*.rest
 # C extensions
 *.so
 
@@ -157,5 +157,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# Pycharm
+# IDE's
 .idea/
+.vscode/
+
+# Históricos
+media/historicos
