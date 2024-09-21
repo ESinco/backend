@@ -510,6 +510,7 @@ class EditarProjetoTests(APITestCase):
         response = self.client.put(self.url_editar, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+
 class RecomendacaoTests(APITestCase):
     def setUp(self):
         self.usuario_aluno = User.objects.create_user(
@@ -627,4 +628,85 @@ class RecomendacaoTests(APITestCase):
     def test_metodo_nao_permitido(self):
         self.client.force_authenticate(user=self.usuario_aluno)
         response = self.client.post(self.url_recomendacao)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class GerenciarInscricaoTests(APITestCase):
+    def setUp(self):
+        self.aluno_usuario = User.objects.create_user(
+            username='beatriz@example.com',
+            email='beatriz@example.com',
+            password='senhaSegura'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula='200000002',
+            nome='Beatriz', 
+            email='beatriz@example.com', 
+            user=self.aluno_usuario
+        )
+        self.professor_usuario = User.objects.create_user(
+            username='profjoao@example.com',
+            email='profjoao@example.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            nome='Prof. Joao',
+            email='profjoao@example.com',
+            user=self.professor_usuario
+        )
+        self.projeto = Projeto.objects.create(
+            nome='Projeto 1',
+            descricao='Descrição do Projeto 1',
+            laboratorio='Laboratório 1',
+            vagas=5,
+            responsavel=self.professor
+        )
+
+        self.associacao = Associacao.objects.create(aluno=self.aluno, projeto=self.projeto, status=True)
+
+        self.url_gerenciar_inscricao = reverse('gerenciar_inscricao', args=[self.projeto.id_projeto, self.aluno.matricula])
+    
+    def test_gerenciar_inscricao_com_sucesso(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        response = self.client.post(self.url_gerenciar_inscricao, data={'status': False, 'enviar_email': True})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.associacao.refresh_from_db()
+        self.assertFalse(self.associacao.status)
+        self.assertTrue(response.data['email_enviado'])
+
+    def test_inscricao_nao_encontrada(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        usuario_sem_inscricao = User.objects.create_user(
+            username='seminscricao@example.com',
+            email='seminscricao@example.com',
+            password='senhaSegura'
+        )
+        aluno_sem_inscricao = Aluno.objects.create(
+            matricula='000000000',
+            nome='Aluno sem inscrição', 
+            email='seminscricao@example.com', 
+            user=usuario_sem_inscricao
+        )
+        url_aluno_sem_inscricao = reverse('gerenciar_inscricao', args=[self.projeto.id_projeto, aluno_sem_inscricao.matricula])
+        response = self.client.post(url_aluno_sem_inscricao, data={'status': True, 'enviar_email': True})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("Essa inscrição não existe.", response.data['detail'])
+
+
+    def test_acesso_negado_para_aluno(self):
+        self.client.force_authenticate(user=self.aluno_usuario)
+        response = self.client.post(self.url_gerenciar_inscricao, data={})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("Acesso negado. Apenas professores podem gerenciar inscrições.", response.data['detail'])
+
+    def test_projeto_nao_encontrado(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        url_invalida = reverse('gerenciar_inscricao', args=[999, self.aluno.matricula])
+        response = self.client.post(url_invalida, data={})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("Projeto não encontrado.", response.data['detail'])
+
+    def test_metodo_incorreto(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        response = self.client.put(self.url_gerenciar_inscricao, data={})
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
