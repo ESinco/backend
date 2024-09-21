@@ -710,3 +710,369 @@ class GerenciarInscricaoTests(APITestCase):
         self.client.force_authenticate(user=self.professor_usuario)
         response = self.client.put(self.url_gerenciar_inscricao, data={})
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        
+        
+class SalvarFiltragemTest(APITestCase):
+    def setUp(self):
+        self.professor_usuario = User.objects.create_user(
+            username='profjoao@example.com',
+            email='profjoao@example.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            nome='Prof. Joao',
+            email='profjoao@example.com',
+            user=self.professor_usuario
+        )
+
+        self.projeto = Projeto.objects.create(
+            nome='Projeto 1',
+            descricao='Descrição do Projeto 1',
+            laboratorio='Laboratório 1',
+            vagas=5,
+            responsavel=self.professor
+        )
+        
+        self.colaborador_usuario = User.objects.create_user(
+            username='colaborador@example.com',
+            email='colaborador@example.com',
+            password='senhaSegura'
+        )
+        self.colaborador = Professor.objects.create(
+            nome='Prof. Maria',
+            email='colaborador@example.com',
+            user=self.colaborador_usuario
+        )
+
+        Colaborador.objects.create(
+            professor=self.colaborador,
+            projeto=self.projeto
+        )
+
+        self.habilidade1 = Habilidade.objects.create(nome='Python')
+        self.habilidade2 = Habilidade.objects.create(nome='Java')
+        
+        self.experiencia1 = Experiencia.objects.create(nome='Estágio em TI')
+        self.experiencia2 = Experiencia.objects.create(nome='Desenvolvimento de Software')
+
+        self.interesse1 = Interesse.objects.create(nome='Desenvolvimento Web', grupo='Tecnologia')
+        self.interesse2 = Interesse.objects.create(nome='Data Science', grupo='Tecnologia')
+
+        self.client = APIClient()
+    
+    def test_professor_responsavel_criar_filtragem(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+
+        data = {
+            'id_projeto': self.projeto.id_projeto,
+            'titulo': 'Filtro 1',
+            'filtro_habilidades': [self.habilidade1.id, self.habilidade2.id],
+            'filtro_experiencias': [self.experiencia1.id],
+            'filtro_interesses': [self.interesse1.id],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 8}],
+            'filtro_cra': 7.5
+        }
+
+        response = self.client.post(reverse('salvar_filtragem'), data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['titulo'], 'Filtro 1')
+    
+    def test_criar_filtragem_sem_titulo(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        data = {
+            'id_projeto': self.projeto.id_projeto,
+            'titulo': '',
+            'filtro_habilidades': [],
+            'filtro_experiencias': [],
+            'filtro_interesses': [],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 8}],
+            'filtro_cra': 7.5
+        }
+        response = self.client.post(reverse('salvar_filtragem'), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_criar_filtragem_disciplinas_invalidas(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        data = {
+            'id_projeto': self.projeto.id_projeto,
+            'titulo': 'Filtro 2',
+            'filtro_habilidades': [],
+            'filtro_experiencias': [],
+            'filtro_interesses': [],
+            'filtro_disciplinas': [{"invalid_key": "Matemática", "nota": 8}],
+            'filtro_cra': 7.5
+        }
+        response = self.client.post(reverse('salvar_filtragem'), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_criar_filtragem_nota_fora_do_intervalo(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        data = {
+            'id_projeto': self.projeto.id_projeto,
+            'titulo': 'Filtro 3',
+            'filtro_habilidades': [],
+            'filtro_experiencias': [],
+            'filtro_interesses': [],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 11}],  # Nota inválida
+            'filtro_cra': 7.5
+        }
+        response = self.client.post(reverse('salvar_filtragem'), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_criar_filtragem_sem_autenticacao(self):
+        data = {
+            'id_projeto': self.projeto.id_projeto,
+            'titulo': 'Filtro 4',
+            'filtro_habilidades': [],
+            'filtro_experiencias': [],
+            'filtro_interesses': [],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 8}],
+            'filtro_cra': 7.5
+        }
+        response = self.client.post(reverse('salvar_filtragem'), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_colaborador_criar_filtragem(self):
+        self.client.force_authenticate(user=self.colaborador_usuario)
+
+        data = {
+            'id_projeto': self.projeto.id_projeto,
+            'titulo': 'Filtro do Colaborador',
+            'filtro_habilidades': [self.habilidade1.id],
+            'filtro_experiencias': [self.experiencia1.id],
+            'filtro_interesses': [self.interesse1.id, self.interesse2.id],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 8}],
+            'filtro_cra': 7.5
+        }
+        response = self.client.post(reverse('salvar_filtragem'), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+class GetListaByIdTest(APITestCase):
+    
+    def setUp(self):
+        self.professor_usuario = User.objects.create_user(
+            username='profjoao@example.com',
+            email='profjoao@example.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            nome='Prof. Joao',
+            email='profjoao@example.com',
+            user=self.professor_usuario
+        )
+        
+        self.professor_nao_dono_usuario = User.objects.create_user(
+            username='profmaria@example.com',
+            email='profmaria@example.com',
+            password='senhaSegura'
+        )
+        self.professor_nao_dono = Professor.objects.create(
+            nome='Prof. Maria',
+            email='profmaria@example.com',
+            user=self.professor_nao_dono_usuario
+        )
+        
+        self.projeto = Projeto.objects.create(
+            nome='Projeto 1',
+            descricao='Descrição do Projeto 1',
+            laboratorio='Laboratório 1',
+            vagas=5,
+            responsavel=self.professor
+        )
+
+        self.lista = Lista_Filtragem.objects.create(
+            id_projeto=self.projeto,
+            id_professor=self.professor,
+            titulo='Lista Original',
+            filtro_disciplinas=[{"disciplina": "Matemática", "nota": 8}],
+            filtro_cra=7.5
+        )
+        
+        self.url = reverse('get_lista_by_id', args=[self.lista.id_lista])
+    
+    def test_professor_dono_acessa_lista(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['titulo'], "Lista Original")
+    
+    def test_professor_nao_dono_nao_acessa_lista(self):
+        self.client.force_authenticate(user=self.professor_nao_dono_usuario)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "Apenas o dono da lista pode visualizá-la")
+    
+    def test_lista_nao_encontrada(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        
+        url_invalida = reverse('get_lista_by_id', args=[999])
+        response = self.client.get(url_invalida)
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+class DeletarListaFiltragemTest(APITestCase):
+    def setUp(self):
+        self.professor_usuario = User.objects.create_user(
+            username='professor@example.com',
+            email='professor@example.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            nome='Prof. Exemplo',
+            email='professor@example.com',
+            user=self.professor_usuario
+        )
+        
+        self.projeto = Projeto.objects.create(
+            nome='Projeto 1',
+            descricao='Descrição do Projeto 1',
+            laboratorio='Laboratório 1',
+            vagas=5,
+            responsavel=self.professor
+        )
+        
+        self.lista = Lista_Filtragem.objects.create(
+            id_projeto= self.projeto,
+            id_professor=self.professor,
+            titulo='Lista para deletar',
+            filtro_disciplinas=[{"disciplina": "Matemática", "nota": 8}],
+            filtro_cra=7.5
+        )
+
+        self.url_deletar = reverse('deletar_lista_filtragem', args=[self.lista.id_lista])
+
+    def test_deletar_lista_com_sucesso(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        response = self.client.delete(self.url_deletar)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Lista_Filtragem.objects.filter(pk=self.lista.id_lista).exists())
+
+    def test_deletar_lista_usuario_nao_autenticado(self):
+        response = self.client.delete(self.url_deletar)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_deletar_lista_dono_nao_encontrado(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        self.lista.delete()
+        response = self.client.delete(self.url_deletar)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_deletar_lista_acesso_negado(self):
+        outro_usuario = User.objects.create_user(
+            username='outro_professor@example.com',
+            email='outro_professor@example.com',
+            password='senhaSegura'
+        )
+
+        self.client.force_authenticate(user=outro_usuario)
+        response = self.client.delete(self.url_deletar)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+class EditarFiltragemTest(APITestCase):
+    def setUp(self):
+        self.professor_usuario = User.objects.create_user(
+            username='professor@example.com',
+            email='professor@example.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            nome='Prof. Exemplo',
+            email='professor@example.com',
+            user=self.professor_usuario
+        )
+
+        self.habilidade1 = Habilidade.objects.create(nome='Python')
+        self.experiencia1 = Experiencia.objects.create(nome='Estágio em TI')
+        self.interesse1 = Interesse.objects.create(nome='Desenvolvimento Web')
+
+        self.projeto = Projeto.objects.create(
+            nome='Projeto 1',
+            descricao='Descrição do Projeto 1',
+            laboratorio='Laboratório 1',
+            vagas=5,
+            responsavel=self.professor
+        )
+        
+        self.lista = Lista_Filtragem.objects.create(
+            id_projeto= self.projeto,
+            id_professor=self.professor,
+            titulo='Lista Original',
+            filtro_disciplinas=[{"disciplina": "Matemática", "nota": 8}],
+            filtro_cra=7.5
+        )
+        
+        self.lista.filtro_habilidades.set([self.habilidade1])
+        self.url_editar = reverse('editar_filtragem', args=[self.lista.id_lista])
+
+    def test_editar_lista_com_sucesso(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        data = {
+            'titulo': 'Lista Editada',
+            'filtro_experiencias': [self.experiencia1.id],
+            'filtro_interesses': [self.interesse1.id],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 9}],
+            'filtro_cra': 8.0
+        }
+        response = self.client.put(self.url_editar, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.lista.refresh_from_db()
+        self.assertEqual(self.lista.titulo, 'Lista Editada')
+        self.assertEqual(self.lista.filtro_cra, 8.0)
+        self.assertEqual(len(self.lista.filtro_interesses.all()),1)
+        self.assertTrue(self.lista.filtro_interesses.filter(id=self.interesse1.id).exists())
+        
+    def test_editar_lista_usuario_nao_autenticado(self):
+        data = {
+            'titulo': 'Lista Editada',
+            'filtro_habilidades': [self.habilidade1.id],
+            'filtro_experiencias': [self.experiencia1.id],
+            'filtro_interesses': [self.interesse1.id],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 9}],
+            'filtro_cra': 8.0
+        }
+        response = self.client.put(self.url_editar, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_editar_lista_dono_nao_encontrado(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+        self.lista.delete() 
+        data = {
+            'titulo': 'Lista Editada',
+            'filtro_habilidades': [self.habilidade1.id],
+            'filtro_experiencias': [self.experiencia1.id],
+            'filtro_interesses': [self.interesse1.id],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 9}],
+            'filtro_cra': 8.0
+        }
+        response = self.client.put(self.url_editar, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_editar_lista_acesso_negado(self):
+        outro_usuario = User.objects.create_user(
+            username='outro_professor@example.com',
+            email='outro_professor@example.com',
+            password='senhaSegura'
+        )
+        outro_professor = Professor.objects.create(
+            nome='Outro Professor',
+            email='outro_professor@example.com',
+            user=outro_usuario
+        )
+
+        self.client.force_authenticate(user=outro_usuario)
+        data = {
+            'titulo': 'Lista Editada',
+            'filtro_habilidades': [self.habilidade1.id],
+            'filtro_experiencias': [self.experiencia1.id],
+            'filtro_interesses': [self.interesse1.id],
+            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 9}],
+            'filtro_cra': 8.0
+        }
+        response = self.client.put(self.url_editar, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
