@@ -1,9 +1,10 @@
+import os
 from django.db import models
 from django.contrib.auth.models import User
-import os
 
 from api_professor.models import Professor
 from api_rest.models import Habilidade, Experiencia, Interesse, Feedback, Disciplina
+
 
 class Aluno(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
@@ -24,7 +25,8 @@ class Aluno(models.Model):
                 f'curriculo: {self.curriculo}\n'
                 f'github: {self.github}\n'
                 f'linkedin: {self.linkedin}')
-        
+
+
 class Disciplina_Matriculada(models.Model):
     id = models.AutoField(primary_key=True)
     historico = models.ForeignKey('Historico_Academico', related_name='disciplinas_matriculadas', on_delete=models.CASCADE)
@@ -36,7 +38,8 @@ class Disciplina_Matriculada(models.Model):
 
     def __str__(self):
         return f"{self.nome} - {self.media}"
-        
+
+
 class Historico_Academico(models.Model):
     id = models.AutoField(primary_key=True)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, related_name='historicos')
@@ -47,7 +50,7 @@ class Historico_Academico(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['aluno'], name='unique_historico_por_aluno')
         ]
-    
+
     def delete(self, *args, **kwargs):
         if self.historico_pdf and os.path.isfile(self.historico_pdf.path):
             os.remove(self.historico_pdf.path)
@@ -55,7 +58,8 @@ class Historico_Academico(models.Model):
 
     def __str__(self):
         return f"Histórico de {self.aluno.nome}"
-    
+
+
 class Avaliacao(models.Model):
     id_avaliacao = models.AutoField(primary_key=True)
     id_professor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)

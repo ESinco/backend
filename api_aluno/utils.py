@@ -2,6 +2,7 @@ import pdfplumber
 from .models import Disciplina_Matriculada
 from api_rest.models import Disciplina
 
+
 def extrair_disciplinas_do_pdf(historico_academico):
     pdf_path = historico_academico.historico_pdf.path
     total_creditos = 0
@@ -47,7 +48,6 @@ def extrair_disciplinas_do_pdf(historico_academico):
                         media = float(media_str)
                     except ValueError:
                         media = None
-
 
                     nomes_professores = []
                     i += 1

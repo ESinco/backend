@@ -2,17 +2,19 @@ from .models import Disciplina
 
 import requests
 
+
 def atualizar_disciplinas():
     url = "https://eureca.sti.ufcg.edu.br/das/v2/curriculos/curriculo?curso=14102100&curriculo=2023"
     response = realizer_requisicao(url)
     if response:
         salvar_disciplinas(response["disciplinas_do_curriculo"])
-    
+
     url = "https://eureca.sti.ufcg.edu.br/das/v2/curriculos/curriculo?curso=14102100&curriculo=2017"
     response = realizer_requisicao(url)
     if response:
         salvar_disciplinas(response["disciplinas_do_curriculo"])
-    
+
+
 def realizer_requisicao(url):
     try:
         response = requests.get(url)
@@ -21,6 +23,7 @@ def realizer_requisicao(url):
         return None
     except requests.exceptions.RequestException as e:
         return None
+
 
 def salvar_disciplinas(disciplinas):
     for disciplina in disciplinas:

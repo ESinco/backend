@@ -34,7 +34,7 @@ class Command(BaseCommand):
             ('Desenvolvimento de Software', 'Hard Skills'),
             ('Testes', 'Hard Skills')
         ]
-        
+
         tags_experiencias = [
             # Experiências
             ('Gestão de Equipes', 'Experiências'),
@@ -72,9 +72,9 @@ class Command(BaseCommand):
             ('Testes', 'Interesses'),
             ('Gestão', 'Interesses')
         ]
-            
+
         tags_feedbacks = [
-            #Feedbacks
+            # Feedbacks
             ('Boa Comunicação', 'Feedbacks'),
             ('Proativo', 'Feedbacks'),
             ('Criativo', 'Feedbacks'),
@@ -98,13 +98,13 @@ class Command(BaseCommand):
 
         for nome, grupo in tags_habilidades:
             Habilidade.objects.create(nome=nome, grupo=grupo)
-            
+
         for nome, grupo in tags_experiencias:
             Experiencia.objects.create(nome=nome, grupo=grupo)
-            
+
         for nome, grupo in tags_interesses:
             Interesse.objects.create(nome=nome, grupo=grupo)
-            
+
         for nome, grupo in tags_feedbacks:
             Feedback.objects.create(nome=nome, grupo=grupo)
 
