@@ -509,3 +509,122 @@ class EditarProjetoTests(APITestCase):
         self.client.force_authenticate(user=usuario_professor2)
         response = self.client.put(self.url_editar, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+class RecomendacaoTests(APITestCase):
+    def setUp(self):
+        self.usuario_aluno = User.objects.create_user(
+            username='beatriz@example.com',
+            email='beatriz@example.com',
+            password='senhaSegura'
+        )
+        self.aluno = Aluno.objects.create(
+            matricula="200000002",
+            nome="Beatriz", 
+            email="beatriz@example.com", 
+            user=self.usuario_aluno
+        )
+        self.usuario_professor1 = User.objects.create_user(
+            username='prof1@example.com',
+            email='prof1@example.com',
+            password='senhaSegura'
+        )
+        self.professor1 = Professor.objects.create(
+            nome="Prof. 1",
+            email='prof1@example.com',
+            user=self.usuario_professor1
+        )
+        self.usuario_professor2 = User.objects.create_user(
+            username='prof2@example.com',
+            email='prof2@example.com',
+            password='senhaSegura'
+        )
+        self.professor2 = Professor.objects.create(
+            nome="Prof. 2",
+            email='prof2@example.com',
+            user=self.usuario_professor2
+        )
+
+        self.habilidade1 = Habilidade.objects.create(nome="Computação em Nuvem", grupo="Hard Skills")
+        self.habilidade2 = Habilidade.objects.create(nome="Pensamento Criativo", grupo="Soft Skills")
+        self.habilidade3 = Habilidade.objects.create(nome="Inteligência Artificial", grupo="Hard Skills")
+        self.habilidade4 = Habilidade.objects.create(nome="Desenvolvimento Mobile", grupo="Hard Skills")
+        self.habilidade5= Habilidade.objects.create(nome="Testes", grupo="Hard Skills")
+        self.habilidade6 = Habilidade.objects.create(nome="Negociação", grupo="Soft Skills")
+
+        self.projeto1 = Projeto.objects.create(
+            nome='Projeto 1',
+            descricao='Descrição do Projeto 1',
+            laboratorio='Laboratório 1',
+            vagas=5,
+            responsavel=self.professor1
+        )
+        self.projeto2 = Projeto.objects.create(
+            nome='Projeto 2',
+            descricao='Descrição do Projeto 2',
+            laboratorio='Laboratório 2',
+            vagas=5,
+            responsavel=self.professor2
+        )
+        self.projeto3 = Projeto.objects.create(
+            nome='Projeto 3',
+            descricao='Descrição do Projeto 3',
+            laboratorio='Laboratório 3',
+            vagas=5,
+            responsavel=self.professor2
+        )
+        self.projeto4 = Projeto.objects.create(
+            nome='Projeto 4',
+            descricao='Descrição do Projeto 4',
+            laboratorio='Laboratório 4',
+            vagas=5,
+            responsavel=self.professor1
+        )
+        self.projeto5 = Projeto.objects.create(
+            nome='Projeto 5',
+            descricao='Descrição do Projeto 5',
+            laboratorio='Laboratório 5',
+            vagas=5,
+            responsavel=self.professor1
+        )
+        self.projeto1.habilidades.add(self.habilidade1, self.habilidade2, self.habilidade3)
+        self.projeto2.habilidades.add(self.habilidade1, self.habilidade2)
+        self.projeto3.habilidades.add(self.habilidade1)
+        self.projeto5.habilidades.add(self.habilidade4)
+
+        self.url_recomendacao = reverse('recomendacao')
+
+    def test_recomendacao_aluno_com_recomendacoes(self):
+        self.aluno.habilidades.add(self.habilidade2, self.habilidade3, self.habilidade4, self.habilidade6)
+        self.client.force_authenticate(user=self.usuario_aluno)
+        response = self.client.get(self.url_recomendacao)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data), 3)
+        self.assertEqual(response.data[0]['id_projeto'], self.projeto1.id_projeto)
+        self.assertEqual(response.data[1]['id_projeto'], self.projeto5.id_projeto)
+        self.assertEqual(response.data[2]['id_projeto'], self.projeto2.id_projeto)
+        self.assertEqual(response.data[3]['id_projeto'], self.projeto4.id_projeto)
+        self.assertEqual(response.data[4]['id_projeto'], self.projeto3.id_projeto)
+
+    def test_recomendacao_aluno_sem_recomendacoes(self):
+        self.aluno.habilidades.add(self.habilidade5, self.habilidade6)
+        self.client.force_authenticate(user=self.usuario_aluno)
+        response = self.client.get(self.url_recomendacao)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data), 0)
+
+    def test_recomendacao_aluno_sem_habilidades(self):
+        self.client.force_authenticate(user=self.usuario_aluno)
+        response = self.client.get(self.url_recomendacao)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data), 0)
+
+    def test_acesso_negado_para_usuario_nao_aluno(self):
+        self.client.force_authenticate(user=self.usuario_professor1)
+        response = self.client.get(self.url_recomendacao)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("Acesso negado. Apenas alunos podem ver recomendações de projetos.", str(response.data))
+
+    def test_metodo_nao_permitido(self):
+        self.client.force_authenticate(user=self.usuario_aluno)
+        response = self.client.post(self.url_recomendacao)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
