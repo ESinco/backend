@@ -813,7 +813,7 @@ class AlunoVisualizarPerfilTests(APITestCase):
         self.assertEqual(self.habilidade2.id, response_data['habilidades'][1]['id'])
         self.assertEqual(self.experiencia.id, response_data['experiencias'][0]['id'])
         self.assertEqual(self.interesse.id, response_data['interesses'][0]['id'])
-        self.assertEqual(response_data['avaliacao'], [{'id_avaliacao': self.avaliacao.id, 'id_professor': self.professor.id, 'id_aluno': self.aluno.matricula, 'comentario': self.data_professor['comentario'], 'tags': [{'grupo': self.feedback.grupo, 'id': self.feedback.id, 'nome': self.feedback.nome}]}])
+        self.assertEqual(response_data['avaliacao'], [{'id_avaliacao': self.avaliacao.id_avaliacao, 'id_professor': self.professor.id, 'id_aluno': self.aluno.matricula, 'comentario': self.data_professor['avaliacao'][0]['comentario'], 'tags': [{'grupo': self.feedback.grupo, 'id': self.feedback.id, 'nome': self.feedback.nome}]}])
 
     def test_visualizar_perfil_aluno_como_outro_aluno(self):
         outro_usuario = User.objects.create_user(
