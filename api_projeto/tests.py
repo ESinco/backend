@@ -468,3 +468,44 @@ class EditarProjetoTests(APITestCase):
             'vagas': 5,
             'habilidades': [self.habilidade1.id, self.habilidade2.id]
         }
+
+    def test_editar_projeto(self):
+        response = self.client.put(self.url_editar, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        projeto_atualizado = Projeto.objects.get(id_projeto=self.projeto.id_projeto)
+        self.assertEqual(projeto_atualizado.nome, 'Novo Projeto')
+        self.assertEqual(projeto_atualizado.descricao, 'Nova descrição')
+        self.assertEqual(projeto_atualizado.laboratorio, 'Lab B')
+        self.assertEqual(projeto_atualizado.vagas, 5)
+
+        habilidades_projeto = list(projeto_atualizado.habilidades.all())
+        self.assertEqual(len(habilidades_projeto), 2)
+        self.assertIn(self.habilidade1, habilidades_projeto)
+        self.assertIn(self.habilidade2, habilidades_projeto)
+
+    def test_projeto_nao_encontrado(self):
+        url_invalida = reverse('editar_projeto', args=[999])
+        response = self.client.put(url_invalida, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_acesso_negado_para_nao_professor(self):
+        usuario_nao_professor = User.objects.create_user(
+            username='aluno@example.com',
+            email='aluno@example.com',
+            password='senhaSegura'
+        )
+        self.client.force_authenticate(user=usuario_nao_professor)
+        
+        response = self.client.put(self.url_editar, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_acesso_negado_para_outro_professor_nao_responsavel(self):
+        usuario_professor2 = User.objects.create_user(
+            username='profjoao@teste.com', 
+            email='profjoao@teste.com',                                              
+            password='senha123'
+        )
+        self.client.force_authenticate(user=usuario_professor2)
+        response = self.client.put(self.url_editar, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
