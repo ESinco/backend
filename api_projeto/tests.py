@@ -480,3 +480,77 @@ class CadastrarColaboradorTests(APITestCase):
         response = self.client.post(self.url, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], 'Professor ja é colaborador desse projeto.')
+
+class EditarProjetoTests(APITestCase):
+    def setUp(self):
+        self.usuario = User.objects.create_user(
+            username='profmarcos@example.com',
+            email='profmarcos@example.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            nome="Prof. Marcos",
+            user=self.usuario
+        )
+        self.projeto = Projeto.objects.create(
+            nome="Projeto Inicial",
+            descricao="Descrição inicial do projeto.",
+            laboratorio="Lab A",
+            vagas=3,
+            responsavel=self.professor
+        )
+        
+        self.habilidade1 = Habilidade.objects.create(nome="Computação em Nuvem", grupo="Hard Skills")
+        self.habilidade2 = Habilidade.objects.create(nome="Pensamento Criativo", grupo="Soft Skills")
+
+        self.url_editar = reverse('editar_projeto', args=[self.projeto.id_projeto])
+        self.client.force_authenticate(user=self.usuario)
+
+        self.data = {
+            'nome': 'Novo Projeto',
+            'descricao': 'Nova descrição',
+            'laboratorio': 'Lab B',
+            'vagas': 5,
+            'habilidades': [self.habilidade1.id, self.habilidade2.id]
+        }
+
+    def test_editar_projeto(self):
+        response = self.client.put(self.url_editar, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        projeto_atualizado = Projeto.objects.get(id_projeto=self.projeto.id_projeto)
+        self.assertEqual(projeto_atualizado.nome, 'Novo Projeto')
+        self.assertEqual(projeto_atualizado.descricao, 'Nova descrição')
+        self.assertEqual(projeto_atualizado.laboratorio, 'Lab B')
+        self.assertEqual(projeto_atualizado.vagas, 5)
+
+        habilidades_projeto = list(projeto_atualizado.habilidades.all())
+        self.assertEqual(len(habilidades_projeto), 2)
+        self.assertIn(self.habilidade1, habilidades_projeto)
+        self.assertIn(self.habilidade2, habilidades_projeto)
+
+    def test_projeto_nao_encontrado(self):
+        url_invalida = reverse('editar_projeto', args=[999])
+        response = self.client.put(url_invalida, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_acesso_negado_para_nao_professor(self):
+        usuario_nao_professor = User.objects.create_user(
+            username='aluno@example.com',
+            email='aluno@example.com',
+            password='senhaSegura'
+        )
+        self.client.force_authenticate(user=usuario_nao_professor)
+        
+        response = self.client.put(self.url_editar, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_acesso_negado_para_outro_professor_nao_responsavel(self):
+        usuario_professor2 = User.objects.create_user(
+            username='profjoao@teste.com', 
+            email='profjoao@teste.com',                                              
+            password='senha123'
+        )
+        self.client.force_authenticate(user=usuario_professor2)
+        response = self.client.put(self.url_editar, self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
