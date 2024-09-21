@@ -104,7 +104,12 @@ def get_by_id_projeto(request, id_projeto):
             professor = Professor.objects.get(user=request.user)
         except Professor.DoesNotExist:
             professor = None
-            
+
+        try:
+            aluno = Aluno.objects.get(user=request.user)
+        except Aluno.DoesNotExist:
+            aluno = None
+
         data = serializer.data
         associacoes = Associacao.objects.filter(projeto=projeto)
         colaborador = Colaborador.objects.filter(projeto=projeto, professor=professor)
@@ -113,6 +118,13 @@ def get_by_id_projeto(request, id_projeto):
             data['listas_com_filtros'] = ListaFiltragemInfoSerializer(listas_de_filtros, many=True).data
             
             data['candidatos'] = AssociacaoCompletaSerializer(associacoes, many=True).data
+        
+        if aluno:
+            try: 
+                associacao = Associacao.objects.get(projeto=projeto, aluno=aluno)
+                data['status'] = associacao.status
+            except Associacao.DoesNotExist:
+                None
         
         data['quantidade_de_inscritos'] = associacoes.count()
         return Response(data)
