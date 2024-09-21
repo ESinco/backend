@@ -65,7 +65,7 @@ class AvaliacaoInformacoesSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Avaliacao
-        fields = ['id_professor', 'id_aluno', 'comentario', 'tags']
+        fields = ['id_avaliacao', 'id_professor', 'id_aluno', 'comentario', 'tags']
         
 class AvaliacaoPostSerializer(serializers.ModelSerializer):
     tags = serializers.ListField(
