@@ -42,13 +42,14 @@ def login(request):
             response = AlunoInformacoesSerializer(aluno).data
         except Aluno.DoesNotExist:
             return Response({"detail": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     refresh = RefreshToken.for_user(usuario)
     response['isTeacher'] = isTeacher
     response['refresh'] = str(refresh)
     response['access'] = str(refresh.access_token)
 
     return Response(response)
+
 
 @api_view(['GET'])
 def get_all_habilidades(request):
@@ -69,6 +70,7 @@ def get_all_experiencias(request):
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 @api_view(['GET'])
 def get_all_interesses(request):
     if request.method == 'GET':
@@ -87,6 +89,7 @@ def get_all_feedbacks(request):
         return Response(serializer.data)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['GET'])
 def get_all_disciplinas(request):

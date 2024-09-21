@@ -1,5 +1,6 @@
 from django.core.mail import send_mail
 
+
 def encaminhar_email(aluno, projeto, aceito):
     try:
         if aceito:
@@ -12,7 +13,7 @@ def encaminhar_email(aluno, projeto, aceito):
                 "Atenciosamente,\nEquipe do ProjetIn."
             )
             destinatario = [aluno.email]
-            
+
             send_mail(
                 assunto,
                 mensagem,
@@ -20,7 +21,7 @@ def encaminhar_email(aluno, projeto, aceito):
                 destinatario,
                 fail_silently=False,
             )
-            
+
         else:
             assunto = "Resposta de Inscrição no Projeto"
             mensagem = (
@@ -30,7 +31,7 @@ def encaminhar_email(aluno, projeto, aceito):
                 "Atenciosamente,\nEquipe do ProjetIn."
             )
             destinatario = [aluno.email]
-            
+
             send_mail(
                 assunto,
                 mensagem,
@@ -38,5 +39,5 @@ def encaminhar_email(aluno, projeto, aceito):
                 destinatario,
                 fail_silently=False,
             )
-    except:
-        return None   
+    except BaseException:
+        return None
