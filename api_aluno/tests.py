@@ -203,32 +203,32 @@ class getAlunoPorMatriculaTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+
 class UploadHistoricoAcademicoViewTestCase(APITestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.usuario = User.objects.create_user(
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario = User.objects.create_user(
             username='joao.silva@example.com',
             email='joao.silva@example.com',
             password='senhaSegura'
         )
-        cls.aluno = Aluno.objects.create(
+        self.aluno = Aluno.objects.create(
             matricula="123456789",
             nome="João da Silva",
             email="joao.silva@example.com",
             curriculo="Link do curriculo",
             github="https://github.com/joaosilva",
             linkedin="https://linkedin.com/in/joaosilva",
-            user=cls.usuario
+            user=self.usuario
         )
-        cls.url_upload = reverse('upload_historico')
-        cls.pdf_path = os.path.join(os.path.dirname(__file__), 'test_data', 'historico.pdf')
+        self.url_upload = reverse('upload_historico')
+        refresh = RefreshToken.for_user(self.usuario)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.pdf_path = os.path.join(os.path.dirname(__file__), 'test_data', 'historico.pdf')
 
-        if not os.path.exists(cls.pdf_path):
-            raise FileNotFoundError(f"O arquivo PDF não foi encontrado em {cls.pdf_path}")
+        if not os.path.exists(self.pdf_path):
+            raise FileNotFoundError(f"O arquivo PDF não foi encontrado em {self.pdf_path}")
         
-        refresh = RefreshToken.for_user(cls.usuario)
-        cls.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
-        cls.url_visualizar = reverse('visualizar_historico', kwargs={'matricula': cls.aluno.matricula})
 
     def test_upload_historico(self):
         with open(self.pdf_path, 'rb') as pdf_file:
@@ -249,7 +249,7 @@ class UploadHistoricoAcademicoViewTestCase(APITestCase):
         with open(self.pdf_path, 'rb') as pdf_file:
             response = self.client.post(
                 self.url_upload,
-                data={'aluno': self.aluno.matricula, 'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
+                data={'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
                 format='multipart'
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -276,19 +276,27 @@ class UploadHistoricoAcademicoViewTestCase(APITestCase):
         self.assertNotEqual(list(disciplinas_anteriores), list(disciplinas_novas))
 
     def test_upload_historico_aluno_nao_existe(self):
+        user = User.objects.create_user(
+            username='marco.silva@example.com',
+            email='marco.silva@example.com',
+            password='senhaSegura'
+        )
+        refresh = RefreshToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        
         with open(self.pdf_path, 'rb') as pdf_file:
             response = self.client.post(
                 self.url_upload,
-                data={'aluno': '999999999', 'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
+                data={'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
                 format='multipart'
             )
-            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_upload_pdf_vazio(self):
         empty_pdf = SimpleUploadedFile('historico.pdf', b'')
         response = self.client.post(
             self.url_upload,
-            data={'aluno': self.aluno.matricula, 'historico_pdf': empty_pdf},
+            data={'historico_pdf': empty_pdf},
             format='multipart'
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -321,39 +329,55 @@ class UploadHistoricoAcademicoViewTestCase(APITestCase):
         self.assertEqual("Acesso negado. Apenas alunos podem cadastrar históricos.", response.data['detail'])
         
     def test_upload_historico_com_token_tipo_errado(self):
-        refresh = RefreshToken.for_user(self.aluno)
+        refresh = RefreshToken.for_user(self.usuario)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh}')        
-        response = self.client.get(self.url, format='json')
+        response = self.client.get(self.url_upload, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['code'], "token_not_valid")
         self.assertEqual(response.data['messages'][0]['message'], "Token tem tipo errado")
 
+
 class VisualizarHistoricoAcademicoViewTestCase(APITestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.usuario = User.objects.create_user(
+    def setUp(self):
+        self.usuario = User.objects.create_user(
             username='joao.silva@example.com',
             email='joao.silva@example.com',
             password='senhaSegura'
         )
-        cls.aluno = Aluno.objects.create(
+        self.aluno = Aluno.objects.create(
             matricula="123456789",
             nome="João da Silva",
             email="joao.silva@example.com",
             curriculo="Link do curriculo",
             github="https://github.com/joaosilva",
             linkedin="https://linkedin.com/in/joaosilva",
-            user=cls.usuario
+            user=self.usuario
         )
-        cls.url_upload = reverse('upload_historico')
-        cls.pdf_path = os.path.join(os.path.dirname(__file__), 'test_data', 'historico.pdf')
+        self.url_upload = reverse('upload_historico')
+        self.pdf_path = os.path.join(os.path.dirname(__file__), 'test_data', 'historico.pdf')
 
-        if not os.path.exists(cls.pdf_path):
-            raise FileNotFoundError(f"O arquivo PDF não foi encontrado em {cls.pdf_path}")
+        if not os.path.exists(self.pdf_path):
+            raise FileNotFoundError(f"O arquivo PDF não foi encontrado em {self.pdf_path}")
 
-        cls.url_visualizar = reverse('visualizar_historico', kwargs={'matricula': cls.aluno.matricula})
-        
+        self.url_visualizar = reverse('visualizar_historico', kwargs={'matricula': self.aluno.matricula})
+
+    def test_upload_historico(self):
+        self.client.force_authenticate(user=self.usuario)
+        with open(self.pdf_path, 'rb') as pdf_file:
+            response = self.client.post(
+                self.url_upload,
+                data={'aluno': self.aluno.matricula, 'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
+                format='multipart'
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            historico = Historico_Academico.objects.get(aluno=self.aluno)
+            self.assertIsNotNone(historico)
+            self.assertTrue(os.path.isfile(historico.historico_pdf.path))
+            self.assertIsNotNone(historico.cra)
+            disciplinas_matriculadas = Disciplina_Matriculada.objects.filter(historico=historico)
+            self.assertGreater(len(disciplinas_matriculadas), 0)
+            
     def test_visualizar_historico_com_aluno(self):
         self.client.force_authenticate(user=self.usuario)
         self.test_upload_historico()
@@ -512,7 +536,7 @@ class DeleteInteressarNoProjetoTests(APITestCase):
     def test_delete_interesse_no_projeto_sucesso(self):
         response = self.client.delete(self.url)
         
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
         self.assertEqual(response.data['detail'], 'Associação deletada com sucesso.')
         self.assertEqual(Associacao.objects.count(), 0)
 
@@ -581,12 +605,12 @@ class AlunoUpdateTests(APITestCase):
             'email': 'newtestuser@example.com',
             'github': 'https://github.com/new', 
             'linkedin': 'https://linkedin.com/in/new', 
-            'habilidades': [{"nome": self.habilidade_nova1.nome, "grupo": self.habilidade_nova1.grupo}, 
-                            {"nome": self.habilidade_nova2.nome, "grupo": self.habilidade_nova2.grupo}], 
-            'experiencias': [{"nome": self.experiencia_nova1.nome, "grupo": self.experiencia_nova1.grupo}, 
-                             {"nome" : self.experiencia_nova2.nome, "grupo" : self.experiencia_nova2.grupo}], 
-            'interesses': [{"nome": self.interesse_novo1.nome, "grupo": self.interesse_novo1.grupo}, 
-                           {"nome": self.interesse_novo2.nome, "grupo": self.interesse_novo2.grupo}]        
+            'habilidades': [self.habilidade_nova1.id, 
+                            self.habilidade_nova2.id], 
+            'experiencias': [self.experiencia_nova1.id, 
+                             self.experiencia_nova2.id], 
+            'interesses': [self.interesse_novo1.id,
+                           self.interesse_novo2.id]        
             }
         
     def test_editar_aluno_todas_as_informacoes(self):
@@ -638,8 +662,8 @@ class AlunoUpdateTests(APITestCase):
 
         self.data['nome'] = self.aluno.nome
         self.data['email'] = self.aluno.email
-        self.data['habilidades'] = [{"nome": self.habilidade.nome, "grupo": self.habilidade.grupo}] 
-        self.data['experiencias'] = [{"nome": self.experiencia.nome, "grupo": self.experiencia.grupo}] 
+        self.data['habilidades'] = [self.habilidade.id] 
+        self.data['experiencias'] = [self.experiencia.id] 
 
         response = self.client.put(self.url_editar, self.data, format='json')
 
@@ -766,9 +790,10 @@ class AlunoVisualizarPerfilTests(APITestCase):
         self.assertEqual(response_data['curriculo'], 'Link do curriculo')
         self.assertEqual(response_data['github'], 'https://github.com/joaosilva')
         self.assertEqual(response_data['linkedin'], 'https://linkedin.com/in/joaosilva')
-        self.assertEqual(response_data['habilidades'], ['Programação', 'Proatividade'])
-        self.assertEqual(response_data['experiencias'], ['Gestão de Projetos'])
-        self.assertEqual(response_data['interesses'], ['Inteligência Artificial'])
+        self.assertEqual(self.habilidade.id, response_data['habilidades'][0]['id'])
+        self.assertEqual(self.habilidade2.id, response_data['habilidades'][1]['id'])
+        self.assertEqual(self.experiencia.id, response_data['experiencias'][0]['id'])
+        self.assertEqual(self.interesse.id, response_data['interesses'][0]['id'])
         self.assertNotIn('avaliacao', response_data)
 
 
@@ -784,10 +809,11 @@ class AlunoVisualizarPerfilTests(APITestCase):
         self.assertEqual(response_data['curriculo'], 'Link do curriculo')
         self.assertEqual(response_data['github'], 'https://github.com/joaosilva')
         self.assertEqual(response_data['linkedin'], 'https://linkedin.com/in/joaosilva')
-        self.assertEqual(response_data['habilidades'], ['Programação', 'Proatividade'])
-        self.assertEqual(response_data['experiencias'], ['Gestão de Projetos'])
-        self.assertEqual(response_data['interesses'], ['Inteligência Artificial'])
-        self.assertEqual(response_data['avaliacao'], [{'id_professor': 2, 'id_aluno': '123456789', 'comentario': 'Bom aluno.', 'tags': ['Criativo']}])
+        self.assertEqual(self.habilidade.id, response_data['habilidades'][0]['id'])
+        self.assertEqual(self.habilidade2.id, response_data['habilidades'][1]['id'])
+        self.assertEqual(self.experiencia.id, response_data['experiencias'][0]['id'])
+        self.assertEqual(self.interesse.id, response_data['interesses'][0]['id'])
+        self.assertEqual(response_data['avaliacao'], [{'id_professor': 2, 'id_aluno': '123456789', 'comentario': 'Bom aluno.', 'tags': [{'grupo': self.feedback.grupo, 'id': self.feedback.id, 'nome': self.feedback.nome}]}])
 
     def test_visualizar_perfil_aluno_como_outro_aluno(self):
         outro_usuario = User.objects.create_user(

@@ -187,7 +187,7 @@ class CriarAvaliacaoViewTestCase(APITestCase):
         
         self.avaliacao_data = {
             "comentario" : "Bom demais",
-            "tags" : ["Criativo", "Proativo"]
+            "tags" : [self.tag_criativo.id, self.tag_proativo.id]
         }
         
         
@@ -203,8 +203,8 @@ class CriarAvaliacaoViewTestCase(APITestCase):
         self.assertEqual(response.data['id_professor'], self.professor.id)
         self.assertEqual(response.data['id_aluno'], self.aluno.matricula)
         self.assertEqual(response.data['comentario'], self.avaliacao_data['comentario'])
-        self.assertEqual(response.data['tags'][0], self.avaliacao_data['tags'][0])
-        self.assertEqual(response.data['tags'][1], self.avaliacao_data['tags'][1])
+        self.assertEqual(self.tag_criativo.id, response.data['tags'][0]['id'])
+        self.assertEqual(self.tag_proativo.id, response.data['tags'][1]['id'])
 
     def test_criar_avaliacao_comentario_nulo(self):
         invalid_data = self.avaliacao_data.copy()
@@ -234,8 +234,8 @@ class CriarAvaliacaoViewTestCase(APITestCase):
         self.assertEqual(response.data['id_professor'], self.professor.id)
         self.assertEqual(response.data['id_aluno'], self.aluno.matricula)
         self.assertEqual(response.data['comentario'], valid_data['comentario'])
-        self.assertEqual(response.data['tags'][0], valid_data['tags'][0])
-        self.assertEqual(response.data['tags'][1], valid_data['tags'][1])
+        self.assertEqual(self.tag_criativo.id, response.data['tags'][0]['id'])
+        self.assertEqual(self.tag_proativo.id, response.data['tags'][1]['id'])
              
     def test_criar_avaliacao_tags_vazia(self):
         valid_data = self.avaliacao_data.copy()
