@@ -203,7 +203,7 @@ class getAlunoPorMatriculaTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-class HistoricoAcademicoTests(APITestCase):
+class UploadHistoricoAcademicoViewTestCase(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.usuario = User.objects.create_user(
@@ -225,7 +225,9 @@ class HistoricoAcademicoTests(APITestCase):
 
         if not os.path.exists(cls.pdf_path):
             raise FileNotFoundError(f"O arquivo PDF não foi encontrado em {cls.pdf_path}")
-
+        
+        refresh = RefreshToken.for_user(cls.usuario)
+        cls.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
         cls.url_visualizar = reverse('visualizar_historico', kwargs={'matricula': cls.aluno.matricula})
 
     def test_upload_historico(self):
@@ -301,6 +303,57 @@ class HistoricoAcademicoTests(APITestCase):
         self.assertEqual(Historico_Academico.objects.filter(aluno=self.aluno).count(), 0)
         self.assertEqual(Disciplina_Matriculada.objects.filter(historico__aluno=self.aluno).count(), 0)
 
+    def test_upload_historico_sendo_professor(self):
+        professor_usuario = User.objects.create_user(
+            username='professor@universidade.com',
+            email='professor@universidade.com',
+            password='senhaSegura'
+        )
+        refresh = RefreshToken.for_user(professor_usuario)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        with open(self.pdf_path, 'rb') as pdf_file:
+            response = self.client.post(
+                self.url_upload,
+                data={'historico_pdf': SimpleUploadedFile('historico.pdf', pdf_file.read())},
+                format='multipart'
+            )
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual("Acesso negado. Apenas alunos podem cadastrar históricos.", response.data['detail'])
+        
+    def test_upload_historico_com_token_tipo_errado(self):
+        refresh = RefreshToken.for_user(self.aluno)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh}')        
+        response = self.client.get(self.url, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['code'], "token_not_valid")
+        self.assertEqual(response.data['messages'][0]['message'], "Token tem tipo errado")
+
+class VisualizarHistoricoAcademicoViewTestCase(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.usuario = User.objects.create_user(
+            username='joao.silva@example.com',
+            email='joao.silva@example.com',
+            password='senhaSegura'
+        )
+        cls.aluno = Aluno.objects.create(
+            matricula="123456789",
+            nome="João da Silva",
+            email="joao.silva@example.com",
+            curriculo="Link do curriculo",
+            github="https://github.com/joaosilva",
+            linkedin="https://linkedin.com/in/joaosilva",
+            user=cls.usuario
+        )
+        cls.url_upload = reverse('upload_historico')
+        cls.pdf_path = os.path.join(os.path.dirname(__file__), 'test_data', 'historico.pdf')
+
+        if not os.path.exists(cls.pdf_path):
+            raise FileNotFoundError(f"O arquivo PDF não foi encontrado em {cls.pdf_path}")
+
+        cls.url_visualizar = reverse('visualizar_historico', kwargs={'matricula': cls.aluno.matricula})
+        
     def test_visualizar_historico_com_aluno(self):
         self.client.force_authenticate(user=self.usuario)
         self.test_upload_historico()
