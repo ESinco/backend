@@ -1,0 +1,27 @@
+exclude_dirs:
+  - tests
+  - projetin-venv
+
+exclude:
+  - backend/tests.py
+  - api_aluno/tests.py
+  - api_professor/tests.py
+  - api_projeto/tests.py
+  - api_rest/tests.py
+
+# Confidence levels to include in the output (LOW, MEDIUM, HIGH)
+confidence:
+  - HIGH
+  - MEDIUM
+
+# Severity levels to include in the output (LOW, MEDIUM, HIGH)
+severity:
+  - HIGH
+  - MEDIUM
+
+show_skipped: True
+
+# Plugins (optional): Disable specific Bandit checks by ID
+skips:
+  - B101
+  - B102
