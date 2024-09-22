@@ -431,3 +431,47 @@ def recomendacao(request):
         return Response(resultados)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def encerrar_projeto(request, id_projeto):
+    try:
+        professor = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas professores podem encerrar projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        projeto = Projeto.objects.get(pk=id_projeto)
+    except BaseException:
+        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    if (projeto.responsavel.id != professor.id):
+        return Response({"detail": "Acesso negado. Apenas o responsavel do projeto pode encerrar o projeto."}, status=status.HTTP_403_FORBIDDEN)
+
+
+    projeto.encerrado = True
+    projeto.save()
+    response = ProjetoSerializer(projeto).data
+    return Response(response, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def abrir_projeto(request, id_projeto):
+    try:
+        professor = Professor.objects.get(user=request.user)
+    except Professor.DoesNotExist:
+        return Response({"detail": "Acesso negado. Apenas professores podem abrir projetos."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        projeto = Projeto.objects.get(pk=id_projeto)
+    except BaseException:
+        return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    if (projeto.responsavel.id != professor.id):
+        return Response({"detail": "Acesso negado. Apenas o responsavel do projeto pode abrir o projeto."}, status=status.HTTP_403_FORBIDDEN)
+
+
+    projeto.encerrado = False
+    projeto.save()
+    response = ProjetoSerializer(projeto).data
+    return Response(response, status=status.HTTP_200_OK)
