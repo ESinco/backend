@@ -182,9 +182,6 @@ def get_all_projetos_by_aluno(request):
             except Projeto.DoesNotExist:
                 continue
 
-        if not projetos_com_status:
-            return Response({"detail": "Nenhum projeto encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
         return Response(projetos_com_status, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
