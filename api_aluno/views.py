@@ -189,10 +189,13 @@ def interessar_no_projeto(request, projeto_id):
         return Response({"detail": "Acesso negado. Apenas alunos podem se associar a projetos."}, status=status.HTTP_403_FORBIDDEN)
 
     try:
-        Projeto.objects.get(id_projeto=projeto_id)
+        projeto = Projeto.objects.get(id_projeto=projeto_id)
     except Projeto.DoesNotExist:
         return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
+    
+    if projeto.encerrado:
+        return Response({"detail": "O tempo de inscrição no Projeto foi encerrado"}, status=status.HTTP_400_BAD_REQUEST)
+        
     associacao, criado = Associacao.objects.get_or_create(aluno_id=aluno_autenticado.matricula, projeto_id=projeto_id)
 
     if criado:

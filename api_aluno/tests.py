@@ -463,6 +463,16 @@ class InteresseNoProjetoTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_interesse_no_projeto_sucesso(self):
+        self.projeto.encerrado = True
+        self.projeto.save()
+        
+        response = self.client.post(self.url, {'projeto_id': self.projeto.id_projeto}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Associacao.objects.count(), 0)
+        
+    def test_interesse_no_projeto_encerrado(self):
+        self.projeto.encerrado = True
         response = self.client.post(self.url, {'projeto_id': self.projeto.id_projeto}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
