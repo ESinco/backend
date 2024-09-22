@@ -15,6 +15,7 @@ class Projeto(models.Model):
     data_de_criacao = models.DateTimeField(default=timezone.now)
     responsavel = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
     habilidades = models.ManyToManyField(Habilidade, related_name="habilidades_desejadas", blank=True)
+    encerrado = models.BooleanField(default=True)
 
     def __str__(self):
         return (f'nome: {self.nome}\n'

@@ -82,7 +82,8 @@ class CriarProjetoViewTestCase(APITestCase):
             "descricao": "Descrição do projeto teste",
             "laboratorio": "Dono Teste",
             "vagas": 5,
-            "habilidades": [self.habilidade.id]
+            "habilidades": [self.habilidade.id],
+            "encerrado": False
         }
 
         refresh = RefreshToken.for_user(usuario)
@@ -96,6 +97,7 @@ class CriarProjetoViewTestCase(APITestCase):
         self.assertEqual(response.data['responsavel']['nome'], self.professor.nome)
         self.assertEqual(response.data['responsavel']['email'], self.professor.email)
         self.assertEqual(response.data['habilidades'][0]['id'], self.habilidade.id)
+        self.assertFalse(response.data['encerrado'])
 
     def test_criar_projeto_nome_vazio(self):
         invalid_data = self.projeto_data.copy()
