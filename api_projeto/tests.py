@@ -1080,3 +1080,150 @@ class EditarFiltragemTest(APITestCase):
         }
         response = self.client.put(self.url_editar, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+class EncerrarProjetoTest(APITestCase):
+    def setUp(self):
+        self.professor_usuario = User.objects.create_user(
+            username='profjoao@example.com',
+            email='profjoao@example.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            nome='Prof. Joao',
+            email='profjoao@example.com',
+            user=self.professor_usuario
+        )
+
+        self.outro_professor_usuario = User.objects.create_user(
+            username='outroprof@example.com',
+            email='outroprof@example.com',
+            password='senhaSegura'
+        )
+        self.outro_professor = Professor.objects.create(
+            nome='Prof. Maria',
+            email='outroprof@example.com',
+            user=self.outro_professor_usuario
+        )
+
+        self.projeto = Projeto.objects.create(
+            nome='Projeto Teste',
+            descricao='Descrição do Projeto',
+            laboratorio='Laboratório 1',
+            vagas=5,
+            responsavel=self.professor
+        )
+
+        self.url = reverse('encerrar_projeto', args=[self.projeto.id_projeto])
+
+        self.client = APIClient()
+
+    def test_professor_responsavel_encerrar_projeto(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+
+        response = self.client.post(self.url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.projeto.refresh_from_db()
+        self.assertTrue(self.projeto.encerrado)
+
+    def test_professor_nao_responsavel_encerrar_projeto(self):
+        self.client.force_authenticate(user=self.outro_professor_usuario)
+
+        response = self.client.post(self.url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.projeto.refresh_from_db()
+        self.assertFalse(self.projeto.encerrado)
+
+    def test_projeto_nao_encontrado(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+
+        url_invalida = reverse('encerrar_projeto', args=[999])
+        response = self.client.post(url_invalida, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_usuario_nao_autenticado(self):
+        response = self.client.post(self.url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_professor_encerrar_projeto_ja_encerrado(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+
+        self.projeto.encerrado = True
+        self.projeto.save()
+
+        response = self.client.post(self.url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.projeto.refresh_from_db()
+        self.assertTrue(self.projeto.encerrado)
+
+class AbrirProjetoTest(APITestCase):
+    def setUp(self):
+        self.professor_usuario = User.objects.create_user(
+            username='profjoao@example.com',
+            email='profjoao@example.com',
+            password='senhaSegura'
+        )
+        self.professor = Professor.objects.create(
+            nome='Prof. Joao',
+            email='profjoao@example.com',
+            user=self.professor_usuario
+        )
+
+        self.projeto = Projeto.objects.create(
+            nome='Projeto Teste',
+            descricao='Descrição do Projeto Teste',
+            laboratorio='Laboratório 1',
+            vagas=3,
+            responsavel=self.professor,
+            encerrado=True
+        )
+
+        self.colaborador_usuario = User.objects.create_user(
+            username='profmaria@example.com',
+            email='profmaria@example.com',
+            password='senhaSegura'
+        )
+        self.colaborador = Professor.objects.create(
+            nome='Prof. Maria',
+            email='profmaria@example.com',
+            user=self.colaborador_usuario
+        )
+
+        self.url_abrir_projeto = reverse('abrir_projeto', kwargs={'id_projeto': self.projeto.id_projeto})
+        
+        self.client = APIClient()
+
+    def test_professor_responsavel_abrir_projeto(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+
+        response = self.client.post(self.url_abrir_projeto, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.projeto.refresh_from_db()
+        self.assertFalse(self.projeto.encerrado)
+        
+    def test_professor_nao_responsavel_abrir_projeto(self):
+        self.client.force_authenticate(user=self.colaborador_usuario)
+
+        response = self.client.post(self.url_abrir_projeto, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.projeto.refresh_from_db()
+        self.assertTrue(self.projeto.encerrado)
+
+    def test_professor_nao_autenticado(self):
+        response = self.client.post(self.url_abrir_projeto, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_projeto_nao_encontrado(self):
+        self.client.force_authenticate(user=self.professor_usuario)
+
+        url_invalido = reverse('abrir_projeto', kwargs={'id_projeto': 9999})
+        response = self.client.post(url_invalido, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
