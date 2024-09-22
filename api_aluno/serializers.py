@@ -27,6 +27,7 @@ class AlunoPostSerializer(serializers.ModelSerializer):
         aluno = Aluno.objects.create(user=usuario, **validated_data)
         return aluno
 
+
 class AlunoPerfilSerializer(serializers.ModelSerializer):
     habilidades = HabilidadeSerializer(many=True)
     experiencias = ExperienciaSerializer(many=True)
@@ -35,6 +36,7 @@ class AlunoPerfilSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = '__all__'
+
 
 class AlunoPerfilProfessorSerializer(serializers.ModelSerializer):
     avaliacao = AvaliacaoInformacoesSerializer(source='avaliacoes', many=True)
@@ -46,34 +48,39 @@ class AlunoPerfilProfessorSerializer(serializers.ModelSerializer):
         model = Aluno
         fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin', 'habilidades', 'experiencias', 'interesses', 'avaliacao']
 
+
 class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = ['matricula', 'nome', 'email', 'curriculo', 'github', 'linkedin']
 
+
 class AlunoInformacoesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = ['matricula', 'nome', 'email']
-        
+
+
 class DisciplinaMatriculadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina_Matriculada
         fields = '__all__'
 
+
 class DisciplinaMatriculadaNotasSerializer(serializers.ModelSerializer):
     disciplina = DisciplinaNomeSerializer()
-    
+
     class Meta:
         model = Disciplina_Matriculada
         fields = ['id', 'disciplina', 'media']
+
 
 class AlunoDadosSerializer(serializers.ModelSerializer):
     disciplinas_matriculadas = serializers.SerializerMethodField()
     cra = serializers.SerializerMethodField()
     habilidades = HabilidadeSerializer(many=True)
     experiencias = ExperienciaSerializer(many=True)
-    interesses = InteresseSerializer(many=True)    
+    interesses = InteresseSerializer(many=True)
 
     class Meta:
         model = Aluno

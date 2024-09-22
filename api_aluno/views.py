@@ -1,3 +1,4 @@
+import os
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -10,7 +11,6 @@ from rest_framework import status
 from django.http import FileResponse
 from django.conf import settings
 from rest_framework.permissions import IsAuthenticated
-import os
 
 from .utils import extrair_disciplinas_do_pdf
 from api_rest.utils import atualizar_disciplinas
@@ -20,18 +20,20 @@ from api_projeto.models import Projeto, Associacao
 from api_rest.models import *
 from django.http import StreamingHttpResponse
 
+
 @api_view(['POST'])
 def criar_aluno(request):
     if request.method == 'POST':
         serializer = AlunoPostSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
-        
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         aluno = serializer.save()
         response_serializer = AlunoSerializer(aluno)
-        
+
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
@@ -62,11 +64,12 @@ def editar_perfil_aluno(request):
     aluno.habilidades.set(habilidades_objetos)
     aluno.experiencias.set(experiencias_objetos)
     aluno.interesses.set(interesses_objetos)
-    
+
     aluno.save()
 
     serializer = AlunoPerfilSerializer(aluno)
     return Response(serializer.data)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -88,6 +91,7 @@ def visualizar_perfil_aluno(request, matricula):
 
     return Response({'detail': 'Acesso não autorizado'}, status=status.HTTP_403_FORBIDDEN)
 
+
 @api_view(['GET'])
 def get_all_alunos(request):
     if request.method == 'GET':
@@ -97,17 +101,19 @@ def get_all_alunos(request):
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 @api_view(['GET'])
 def get_by_matricula_aluno(request, matricula):
     try:
         aluno = Aluno.objects.get(pk=matricula)
-    except:
+    except BaseException:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         serializer = AlunoSerializer(aluno)
         return Response(serializer.data)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -116,7 +122,7 @@ def upload_historico(request):
         aluno_autenticado = Aluno.objects.get(user=request.user)
     except Aluno.DoesNotExist:
         return Response({"detail": "Acesso negado. Apenas alunos podem cadastrar históricos."}, status=status.HTTP_403_FORBIDDEN)
-    
+
     historico_pdf = request.FILES.get('historico_pdf')
 
     if not historico_pdf or not historico_pdf.size:
@@ -132,10 +138,11 @@ def upload_historico(request):
         )
         atualizar_disciplinas()
         extrair_disciplinas_do_pdf(novo_historico)
-        
+
         return Response(status=status.HTTP_200_OK)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -162,8 +169,8 @@ def visualizar_historico(request, matricula):
             response['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
             return response
         except FileNotFoundError:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-                
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
         except Historico_Academico.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -171,6 +178,7 @@ def visualizar_historico(request, matricula):
         return Response(status=status.HTTP_404_NOT_FOUND)
     except Exception:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -181,17 +189,21 @@ def interessar_no_projeto(request, projeto_id):
         return Response({"detail": "Acesso negado. Apenas alunos podem se associar a projetos."}, status=status.HTTP_403_FORBIDDEN)
 
     try:
-        Projeto.objects.get(id_projeto=projeto_id)
+        projeto = Projeto.objects.get(id_projeto=projeto_id)
     except Projeto.DoesNotExist:
         return Response({"detail": "Projeto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
+    
+    if projeto.encerrado:
+        return Response({"detail": "O tempo de inscrição no Projeto foi encerrado"}, status=status.HTTP_400_BAD_REQUEST)
+        
     associacao, criado = Associacao.objects.get_or_create(aluno_id=aluno_autenticado.matricula, projeto_id=projeto_id)
 
     if criado:
         return Response({"detail": "Associação criada com sucesso."}, status=status.HTTP_201_CREATED)
     else:
         return Response({"detail": "Aluno já está associado a este projeto."}, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def retirar_interessar_no_projeto(request, projeto_id):
@@ -209,5 +221,5 @@ def retirar_interessar_no_projeto(request, projeto_id):
         associacao = Associacao.objects.get(aluno_id=aluno_autenticado.matricula, projeto_id=projeto_id)
         associacao.delete()
         return Response({"detail": "Associação deletada com sucesso."}, status=status.HTTP_204_NO_CONTENT)
-    except:
+    except BaseException:
         return Response({"detail": "Aluno não está associado a este projeto."}, status=status.HTTP_400_BAD_REQUEST)

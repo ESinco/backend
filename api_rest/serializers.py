@@ -25,11 +25,13 @@ class FeedbackSerializer(serializers.ModelSerializer):
         model = Feedback
         fields = '__all__'
 
+
 class DisciplinaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina
         fields = '__all__'
-        
+
+
 class DisciplinaNomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina

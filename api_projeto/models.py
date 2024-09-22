@@ -1,9 +1,10 @@
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from api_professor.models import Professor  
+from api_professor.models import Professor
 from api_aluno.models import Aluno, Disciplina
 from api_rest.models import Habilidade, Experiencia, Interesse
+
 
 class Projeto(models.Model):
     id_projeto = models.AutoField(primary_key=True)
@@ -14,6 +15,7 @@ class Projeto(models.Model):
     data_de_criacao = models.DateTimeField(default=timezone.now)
     responsavel = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
     habilidades = models.ManyToManyField(Habilidade, related_name="habilidades_desejadas", blank=True)
+    encerrado = models.BooleanField(default=False)
 
     def __str__(self):
         return (f'nome: {self.nome}\n'
@@ -22,17 +24,19 @@ class Projeto(models.Model):
                 f'data de criação: {self.data_de_criacao.strftime("%d/%m/%Y")}\n'
                 f'vagas: {self.vagas}\n'
                 f'responsavel: {self.responsavel}')
-        
+
+
 class Associacao(models.Model):
     id_associacao = models.AutoField(primary_key=True)
-    projeto = models.ForeignKey(Projeto, null= False, on_delete=models.CASCADE)
+    projeto = models.ForeignKey(Projeto, null=False, on_delete=models.CASCADE)
     aluno = models.ForeignKey(Aluno, null=False, on_delete=models.CASCADE)
     status = models.BooleanField(null=True)
-    
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['projeto', 'aluno'], name='unique_projeto_aluno')
         ]
+
 
 class Lista_Filtragem(models.Model):
     id_lista = models.AutoField(primary_key=True)
@@ -44,7 +48,7 @@ class Lista_Filtragem(models.Model):
     filtro_interesses = models.ManyToManyField(Interesse, related_name="filtros", blank=True)
     filtro_disciplinas = models.JSONField(blank=True, null=False)
     filtro_cra = models.FloatField(null=True)
-    
+
     def clean(self):
         super().clean()
         self.validate_filtro_disciplinas()
@@ -52,7 +56,7 @@ class Lista_Filtragem(models.Model):
     def validate_filtro_disciplinas(self):
         if not isinstance(self.filtro_disciplinas, list):
             raise ValidationError("O campo 'filtro_disciplinas' deve ser uma lista de objetos.")
-        
+
         for item in self.filtro_disciplinas:
             if not isinstance(item, dict):
                 raise ValidationError("Cada item de 'filtro_disciplinas' deve ser um JSON.")
@@ -68,9 +72,9 @@ class Lista_Filtragem(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-        
+
+
 class Colaborador(models.Model):
     id = models.AutoField(primary_key=True)
     professor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
     projeto = models.ForeignKey(Projeto, null=False, on_delete=models.CASCADE, related_name="colaboradores")
-    

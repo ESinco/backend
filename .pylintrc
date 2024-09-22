@@ -1,0 +1,17 @@
+[MASTER]
+ignore=projetin-venv
+ignore-paths=backend/tests.py,api_aluno/tests.py,api_professor/tests.py,api_projeto/tests.py,api_rest/tests.py
+fail-under=8.0
+
+[MESSAGES CONTROL]
+disable=C0114,W1203,C0115,E1101,R0903
+
+[REPORTS]
+output-format=text
+
+[FORMAT]
+max-line-length=200
+
+[DESIGN]
+[pylint.generate_data.main]
+disable=C0116

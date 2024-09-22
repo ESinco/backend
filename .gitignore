@@ -7,6 +7,7 @@ backend/__pycache__/
 # C extensions
 *.so
 
+
 */migrations/*
 !*/migrations/__init__.py
 # Distribution / packaging
@@ -163,3 +164,10 @@ cython_debug/
 
 # Históricos
 media/historicos
+
+/load_test/final.csv
+/load_test/output.csv
+/load_test/files/*
+
+# Coverage
+.coveragerc
