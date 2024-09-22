@@ -12,7 +12,7 @@ class ProjetoSemIdSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Projeto
-        fields = ['nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel', 'habilidades']
+        fields = ['nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel', 'habilidades', 'encerrado']
 
 
 class ProjetoInformacoesSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class ProjetoInformacoesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Projeto
-        fields = ['nome', 'descricao', 'laboratorio', 'vagas', 'habilidades']
+        fields = ['nome', 'descricao', 'laboratorio', 'vagas', 'habilidades', 'encerrado']
 
 
 class ListaFiltragemPostSerializer(serializers.ModelSerializer):
@@ -153,4 +153,4 @@ class ProjetoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Projeto
-        fields = ['id_projeto', 'nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel', 'habilidades', 'colaboradores']
+        fields = ['id_projeto', 'nome', 'descricao', 'laboratorio', 'data_de_criacao', 'vagas', 'responsavel',  'encerrado', 'habilidades', 'colaboradores']
