@@ -379,8 +379,8 @@ class GetAllProjetosByAlunoViewTestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
         response = self.client.get(self.url, format='json')
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], "Nenhum projeto encontrado.")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data,[])
 
 
 class CadastrarColaboradorTests(APITestCase):

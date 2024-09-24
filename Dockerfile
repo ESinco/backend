@@ -10,6 +10,7 @@ RUN pip install --upgrade pip && \
 COPY api_aluno/ api_aluno/
 COPY api_professor/ api_professor/
 COPY api_projeto/ api_projeto/
+COPY api_rest/ api_rest/
 COPY backend/ backend/
 COPY manage.py .
 
