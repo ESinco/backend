@@ -413,11 +413,11 @@ def recomendacao(request):
 
     if request.method == 'GET':
         if aluno.habilidades.exists():
-            projetos = Projeto.objects.annotate(
+            projetos = Projeto.objects.filter(encerrado=False).annotate(
                 habilidades_em_comum=Count('habilidades', filter=Q(habilidades__in=aluno.habilidades.all()))
             ).order_by('-habilidades_em_comum', '-data_de_criacao')
         else:
-            projetos = Projeto.objects.all().order_by('-data_de_criacao')
+            projetos = Projeto.objects.filter(encerrado=False).order_by('-data_de_criacao')
 
         serializer = ProjetoSerializer(projetos, many=True)
         resultados = [{
