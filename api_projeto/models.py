@@ -60,10 +60,10 @@ class Lista_Filtragem(models.Model):
         for item in self.filtro_disciplinas:
             if not isinstance(item, dict):
                 raise ValidationError("Cada item de 'filtro_disciplinas' deve ser um JSON.")
-            if "disciplina" not in item or "nota" not in item:
-                raise ValidationError("Cada item deve ter as chaves 'disciplina' e 'nota'.")
-            if not isinstance(item["disciplina"], str):
-                raise ValidationError("'disciplina' deve ser uma string.")
+            if "codigo_da_disciplina" not in item or "nota" not in item:
+                raise ValidationError("Cada item deve ter as chaves 'codigo_da_disciplina' e 'nota'.")
+            if not isinstance(item["codigo_da_disciplina"], str):
+                raise ValidationError("'codigo_da_disciplina' deve ser uma string.")
             if not isinstance(item["nota"], (int, float)):
                 raise ValidationError("'nota' deve ser um número.")
             if item["nota"] < 0 or item["nota"] > 10:
