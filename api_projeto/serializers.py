@@ -35,6 +35,9 @@ class ListaFiltragemPostSerializer(serializers.ModelSerializer):
         fields = ['id_projeto', 'titulo', 'filtro_habilidades', 'filtro_experiencias', 'filtro_interesses', 'filtro_cra', 'filtro_disciplinas']
 
     def validate_filtro_disciplinas(self, value):
+        if value is None:
+            return []
+        
         if not isinstance(value, list):
             raise serializers.ValidationError("O campo 'filtro_disciplinas' deve ser uma lista de objetos.")
 
@@ -65,6 +68,9 @@ class ListaFiltragemPutSerializer(serializers.ModelSerializer):
         fields = ['id_lista', 'titulo', 'filtro_habilidades', 'filtro_experiencias', 'filtro_interesses', 'filtro_cra', 'filtro_disciplinas']
 
     def validate_filtro_disciplinas(self, value):
+        if value is None:
+            return []
+        
         if not isinstance(value, list):
             raise serializers.ValidationError("O campo 'filtro_disciplinas' deve ser uma lista de objetos.")
 

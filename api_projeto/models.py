@@ -46,7 +46,7 @@ class Lista_Filtragem(models.Model):
     filtro_habilidades = models.ManyToManyField(Habilidade, related_name="filtros", blank=True)
     filtro_experiencias = models.ManyToManyField(Experiencia, related_name="filtros", blank=True)
     filtro_interesses = models.ManyToManyField(Interesse, related_name="filtros", blank=True)
-    filtro_disciplinas = models.JSONField(blank=True, null=False)
+    filtro_disciplinas = models.JSONField(blank=True)
     filtro_cra = models.FloatField(null=True)
 
     def clean(self):
@@ -54,8 +54,13 @@ class Lista_Filtragem(models.Model):
         self.validate_filtro_disciplinas()
 
     def validate_filtro_disciplinas(self):
+        if self.filtro_disciplinas is None:
+            raise ValidationError("O campo 'filtro_disciplinas' não pode ser None.")
         if not isinstance(self.filtro_disciplinas, list):
             raise ValidationError("O campo 'filtro_disciplinas' deve ser uma lista de objetos.")
+        
+        if self.filtro_disciplinas == []:
+            return self.filtro_disciplinas
 
         for item in self.filtro_disciplinas:
             if not isinstance(item, dict):
@@ -68,6 +73,15 @@ class Lista_Filtragem(models.Model):
                 raise ValidationError("'nota' deve ser um número.")
             if item["nota"] < 0 or item["nota"] > 10:
                 raise ValidationError("'nota' deve estar entre 0 e 10.")
+
+        return self.filtro_disciplinas
+
+    def clean(self):
+        super().clean()
+        if self.filtro_disciplinas is None:
+            self.filtro_disciplinas = []
+        elif not isinstance(self.filtro_disciplinas, list):
+            raise ValidationError("O campo 'filtro_disciplinas' deve ser uma lista de objetos.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
