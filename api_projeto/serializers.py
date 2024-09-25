@@ -41,10 +41,10 @@ class ListaFiltragemPostSerializer(serializers.ModelSerializer):
         for item in value:
             if not isinstance(item, dict):
                 raise serializers.ValidationError("Cada item de 'filtro_disciplinas' deve ser um JSON.")
-            if "disciplina" not in item or "nota" not in item:
-                raise serializers.ValidationError("Cada item deve ter as chaves 'disciplina' e 'nota'.")
-            if not isinstance(item["disciplina"], str):
-                raise serializers.ValidationError("'disciplina' deve ser uma string.")
+            if "codigo_da_disciplina" not in item or "nota" not in item:
+                raise serializers.ValidationError("Cada item deve ter as chaves 'codigo_da_disciplina' e 'nota'.")
+            if not isinstance(item["codigo_da_disciplina"], str):
+                raise serializers.ValidationError("'codigo_da_disciplina' deve ser uma string.")
             if not isinstance(item["nota"], (int, float)):
                 raise serializers.ValidationError("'nota' deve ser um número.")
             if item["nota"] < 0 or item["nota"] > 10:
@@ -71,10 +71,10 @@ class ListaFiltragemPutSerializer(serializers.ModelSerializer):
         for item in value:
             if not isinstance(item, dict):
                 raise serializers.ValidationError("Cada item de 'filtro_disciplinas' deve ser um JSON.")
-            if "disciplina" not in item or "nota" not in item:
-                raise serializers.ValidationError("Cada item deve ter as chaves 'disciplina' e 'nota'.")
-            if not isinstance(item["disciplina"], str):
-                raise serializers.ValidationError("'disciplina' deve ser uma string.")
+            if "codigo_da_disciplina" not in item or "nota" not in item:
+                raise serializers.ValidationError("Cada item deve ter as chaves 'codigo_da_disciplina' e 'nota'.")
+            if not isinstance(item["codigo_da_disciplina"], str):
+                raise serializers.ValidationError("'codigo_da_disciplina' deve ser uma string.")
             if not isinstance(item["nota"], (int, float)):
                 raise serializers.ValidationError("'nota' deve ser um número.")
             if item["nota"] < 0 or item["nota"] > 10:

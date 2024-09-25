@@ -770,7 +770,7 @@ class SalvarFiltragemTest(APITestCase):
             'filtro_habilidades': [self.habilidade1.id, self.habilidade2.id],
             'filtro_experiencias': [self.experiencia1.id],
             'filtro_interesses': [self.interesse1.id],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 8}],
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 8}],
             'filtro_cra': 7.5
         }
 
@@ -787,7 +787,7 @@ class SalvarFiltragemTest(APITestCase):
             'filtro_habilidades': [],
             'filtro_experiencias': [],
             'filtro_interesses': [],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 8}],
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 8}],
             'filtro_cra': 7.5
         }
         response = self.client.post(reverse('salvar_filtragem'), data, format='json')
@@ -815,7 +815,7 @@ class SalvarFiltragemTest(APITestCase):
             'filtro_habilidades': [],
             'filtro_experiencias': [],
             'filtro_interesses': [],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 11}],  # Nota inválida
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 11}],  # Nota inválida
             'filtro_cra': 7.5
         }
         response = self.client.post(reverse('salvar_filtragem'), data, format='json')
@@ -828,7 +828,7 @@ class SalvarFiltragemTest(APITestCase):
             'filtro_habilidades': [],
             'filtro_experiencias': [],
             'filtro_interesses': [],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 8}],
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 8}],
             'filtro_cra': 7.5
         }
         response = self.client.post(reverse('salvar_filtragem'), data, format='json')
@@ -843,7 +843,7 @@ class SalvarFiltragemTest(APITestCase):
             'filtro_habilidades': [self.habilidade1.id],
             'filtro_experiencias': [self.experiencia1.id],
             'filtro_interesses': [self.interesse1.id, self.interesse2.id],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 8}],
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 8}],
             'filtro_cra': 7.5
         }
         response = self.client.post(reverse('salvar_filtragem'), data, format='json')
@@ -887,7 +887,7 @@ class GetListaByIdTest(APITestCase):
             id_projeto=self.projeto,
             id_professor=self.professor,
             titulo='Lista Original',
-            filtro_disciplinas=[{"disciplina": "Matemática", "nota": 8}],
+            filtro_disciplinas=[{"codigo_da_disciplina": "1109049", "nota": 8}],
             filtro_cra=7.5
         )
 
@@ -943,7 +943,7 @@ class DeletarListaFiltragemTest(APITestCase):
             id_projeto=self.projeto,
             id_professor=self.professor,
             titulo='Lista para deletar',
-            filtro_disciplinas=[{"disciplina": "Matemática", "nota": 8}],
+            filtro_disciplinas=[{"codigo_da_disciplina": "1109049", "nota": 8}],
             filtro_cra=7.5
         )
 
@@ -1006,7 +1006,7 @@ class EditarFiltragemTest(APITestCase):
             id_projeto=self.projeto,
             id_professor=self.professor,
             titulo='Lista Original',
-            filtro_disciplinas=[{"disciplina": "Matemática", "nota": 8}],
+            filtro_disciplinas=[{"codigo_da_disciplina": "1109049", "nota": 8}],
             filtro_cra=7.5
         )
 
@@ -1019,7 +1019,7 @@ class EditarFiltragemTest(APITestCase):
             'titulo': 'Lista Editada',
             'filtro_experiencias': [self.experiencia1.id],
             'filtro_interesses': [self.interesse1.id],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 9}],
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 9}],
             'filtro_cra': 8.0
         }
         response = self.client.put(self.url_editar, data, format='json')
@@ -1037,7 +1037,7 @@ class EditarFiltragemTest(APITestCase):
             'filtro_habilidades': [self.habilidade1.id],
             'filtro_experiencias': [self.experiencia1.id],
             'filtro_interesses': [self.interesse1.id],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 9}],
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 9}],
             'filtro_cra': 8.0
         }
         response = self.client.put(self.url_editar, data, format='json')
@@ -1051,7 +1051,7 @@ class EditarFiltragemTest(APITestCase):
             'filtro_habilidades': [self.habilidade1.id],
             'filtro_experiencias': [self.experiencia1.id],
             'filtro_interesses': [self.interesse1.id],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 9}],
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 9}],
             'filtro_cra': 8.0
         }
         response = self.client.put(self.url_editar, data, format='json')
@@ -1075,7 +1075,7 @@ class EditarFiltragemTest(APITestCase):
             'filtro_habilidades': [self.habilidade1.id],
             'filtro_experiencias': [self.experiencia1.id],
             'filtro_interesses': [self.interesse1.id],
-            'filtro_disciplinas': [{"disciplina": "Matemática", "nota": 9}],
+            'filtro_disciplinas': [{"codigo_da_disciplina": "1109049", "nota": 9}],
             'filtro_cra': 8.0
         }
         response = self.client.put(self.url_editar, data, format='json')

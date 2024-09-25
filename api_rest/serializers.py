@@ -32,7 +32,7 @@ class DisciplinaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class DisciplinaNomeSerializer(serializers.ModelSerializer):
+class DisciplinaCodigoENomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina
-        fields = ['nome']
+        fields = ['codigo', 'nome']
