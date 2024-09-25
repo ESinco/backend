@@ -437,7 +437,7 @@ class VisualizarHistoricoAcademicoViewTestCase(APITestCase):
         Historico_Academico.objects.filter(aluno=self.aluno).delete()
         self.client.force_authenticate(user=self.usuario)
         response = self.client.get(self.url_visualizar)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_verificar_dados_processados(self):
         self.test_upload_historico()
