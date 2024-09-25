@@ -152,11 +152,10 @@ def visualizar_historico(request, matricula):
 
         if request.user != aluno.user and not hasattr(request.user, 'professor'):
             return Response(status=status.HTTP_403_FORBIDDEN)
-
-        try:
+        try:    
             historico = Historico_Academico.objects.get(aluno=aluno)
             if not historico.historico_pdf:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(status=status.HTTP_200_OK)
 
             pdf_path = historico.historico_pdf.path
 
@@ -168,12 +167,11 @@ def visualizar_historico(request, matricula):
             response = StreamingHttpResponse(file_iterator(pdf_path), content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
             return response
-        except FileNotFoundError:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        except (Historico_Academico.DoesNotExist, FileNotFoundError):
+            return Response(status=status.HTTP_200_OK)
 
-        except Historico_Academico.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
+            
     except Aluno.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     except Exception:

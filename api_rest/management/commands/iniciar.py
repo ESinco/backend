@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
 from api_aluno.models import Experiencia, Habilidade, Interesse, Feedback
-
+from api_rest.utils import atualizar_disciplinas
 
 class Command(BaseCommand):
-    help = 'Populate the Tags table with initial data'
+    help = 'Preenche as tabelas de Tags e Disciplinas'
 
     def handle(self, *args, **kwargs):
         tags_habilidades = [
@@ -97,15 +97,16 @@ class Command(BaseCommand):
         ]
 
         for nome, grupo in tags_habilidades:
-            Habilidade.objects.create(nome=nome, grupo=grupo)
+            Habilidade.objects.get_or_create(nome=nome, grupo=grupo)
 
         for nome, grupo in tags_experiencias:
-            Experiencia.objects.create(nome=nome, grupo=grupo)
+            Experiencia.objects.get_or_create(nome=nome, grupo=grupo)
 
         for nome, grupo in tags_interesses:
-            Interesse.objects.create(nome=nome, grupo=grupo)
+            Interesse.objects.get_or_create(nome=nome, grupo=grupo)
 
         for nome, grupo in tags_feedbacks:
-            Feedback.objects.create(nome=nome, grupo=grupo)
+            Feedback.objects.get_or_create(nome=nome, grupo=grupo)
 
-        self.stdout.write(self.style.SUCCESS('Successfully populated the Tags table'))
+        atualizar_disciplinas()
+        self.stdout.write(self.style.SUCCESS('Preenchido as tabelas de Habilidades, Experiências, Interesses, Feedbacks e Disciplinas'))
