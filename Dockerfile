@@ -2,7 +2,7 @@ FROM python:3.11
 
 WORKDIR /projetin
 
-COPY requirements.txt .
+COPY requirements/requirements.txt .
 
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
