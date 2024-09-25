@@ -68,11 +68,18 @@ class DisciplinaMatriculadaSerializer(serializers.ModelSerializer):
 
 
 class DisciplinaMatriculadaNotasSerializer(serializers.ModelSerializer):
-    disciplina = DisciplinaNomeSerializer()
+    codigo_da_disciplina = serializers.SerializerMethodField()
+    disciplina = serializers.SerializerMethodField()
 
     class Meta:
         model = Disciplina_Matriculada
-        fields = ['id', 'disciplina', 'media']
+        fields = ['id', 'codigo_da_disciplina', 'disciplina', 'media']
+
+    def get_codigo_da_disciplina(self, obj):
+        return obj.disciplina.codigo
+
+    def get_disciplina(self, obj):
+        return obj.disciplina.nome
 
 
 class AlunoDadosSerializer(serializers.ModelSerializer):
