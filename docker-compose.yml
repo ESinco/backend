@@ -1,8 +1,13 @@
 services:
-  web:
-    build: .
-    container_name: projetin
-    command: python3 manage.py runserver 0.0.0.0:8000
+  backend:
+    build:
+      context: .
+    container_name: backend
+    command: >
+      /bin/sh -c "python3 manage.py makemigrations &&
+                  python3 manage.py migrate &&
+                  python3 manage.py iniciar &&
+                  python3 manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/projetin
     ports:
@@ -13,9 +18,11 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_HOST=db
-      - DB_PORT=5432
+      - DB_PORT=5433
     depends_on:
       - db
+    networks:
+      - app-network
 
   db:
     image: postgres:15
@@ -27,7 +34,14 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    networks:
+      - app-network
+
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:
