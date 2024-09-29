@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-80*zzycuuejq47jtjf(2)mk6(trdjtwtdnd_tj35x5=!n8da-d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['backend-0ytn.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -109,13 +109,14 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'postgres_db',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME', 'postgres'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+        'HOST': os.getenv('DB_HOST', 'db'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+
 
 
 # Password validation
@@ -162,9 +163,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-# CORS_ALLOWED_ORIGINS = [
-#    'http://localhost:8000',
-# ]
+CORS_ALLOWED_ORIGINS = [
+   'https://frontend-ashen-seven-61.vercel.app',
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
