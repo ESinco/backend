@@ -171,3 +171,5 @@ media/historicos
 
 # Coverage
 .coveragerc
+
+.env
